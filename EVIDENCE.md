@@ -4,12 +4,12 @@ Supporting material for [README.md](README.md), which answers the questions you 
 the working underneath: the measurements, the methodology, and the places where testing my own
 assumptions changed my mind. Nothing here is required reading, because the README stands on its own.
 
-Every figure here is either printed by one of the commands below or computed in line from the
-supplied file, with three exceptions, each named where it appears: the 25% and 96% recalls of two
-discarded prompt versions, which no longer exist in the repo and cannot be reproduced at all; the two
-stickiness correlations; and the rejection counts from the first Second Read batch. Worth knowing
-before you run any of it: the rules columns of every eval run without a key, and the model columns
-need `OPENAI_API_KEY`.
+Every figure here is either printed by one of the commands below or derived from the supplied file.
+Two sets are neither, and both are recorded from runs whose code is no longer in the repo: the 25%
+and 96% recalls of two discarded prompt versions, and the rejection counts from the first Second Read
+batch. Worth knowing before you run any of it: the rules columns of every eval run without a key, and
+the model columns need `OPENAI_API_KEY`, except `eval:beyond`, whose model column reads the committed
+batch and therefore runs keyless.
 `npm run verify`, `npm run sensitivity`, `npm run eval`, `npm run eval:beyond`, `npm run eval:cross`.
 
 ---
@@ -175,7 +175,7 @@ does better.
 version biased to "no" (recall 25%), the second to "yes" (recall 96%). Both are earlier prompt versions,
 not the one in the table above, and both scored before I corrected the Harbor Retail label. Those
 bracket the answer rather than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
-above its own numbers. `eval:cross` is the closest thing to an
+below its own numbers. `eval:cross` is the closest thing to an
 independent check, and even that is qualified: I wrote the fixture and its labels too. What is
 genuinely true of it is that nothing in the system was tuned for it: same prompt template, same
 regexes, same validators. An honest reading of every number here is that they were produced by the
@@ -237,8 +237,9 @@ above, not a rewrite.
 
 **119 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
 the author thought of, which on a 40-row file is a weak claim. `lib/properties.test.ts` uses
-`fast-check` to generate thousands of portfolios per run (unmapped enums, negative ARR, dates
-centuries apart, lone surrogates, empty books, duplicate ids) and asserts invariants that must hold
+`fast-check` to generate thousands of portfolios per run (unmapped enums, negative ARR, dates decades
+apart, empty books, duplicate ids) and a separate fuzz over the CSV parser with lone surrogates and
+control bytes, then asserts invariants that must hold
 for *any* input: the risk score is always finite and in range, priority is never negative, the
 evidence panel's contributions always sum to the headline number, ranks are always a permutation of
 1..n.
@@ -281,9 +282,9 @@ npm test              # 119 tests, including the model-output validators
 ```
 
 Every number in the README and in this file is either printed by one of the commands above or
-computed in line from the supplied file, with the three exceptions listed at the top. Only two of
-them are unreproducible: the 25% and 96% recalls, because the prompt versions that produced them are
-no longer in the repo. `npm run eval:beyond` repeats both in its footer, but it is quoting the same
-history rather than measuring it. They are here because the tuning history is the caveat, and they
-are the only two figures you have to take on trust, and you should read them as the range I searched rather than as measurements of anything
-that ships.
+derived from the supplied file, with the two sets listed at the top: the 25% and 96% recalls, and the
+rejection counts from the first Second Read batch. Both came from runs whose code is no longer in the
+repo, so neither can be reproduced. `npm run eval:beyond` repeats the two recalls in its footer, but
+it is quoting the same history rather than measuring it. They are here because the tuning history is
+the caveat, and they are the figures you have to take on trust. Read the recalls as the range I
+searched rather than as measurements of anything that ships.

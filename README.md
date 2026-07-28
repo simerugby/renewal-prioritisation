@@ -13,8 +13,8 @@ A tool for a customer success manager deciding **which renewals need attention, 
 
 Built on the supplied `renewal_customers.csv`: 40 synthetic accounts, £4,431,000 of ARR, snapshot
 dated 2026-07-21. The app is four pages: a ranked portfolio table, an account page per customer showing
-every signal that fired and the rule behind its suggested action, a method page with the weights and
-the curves, and `/try` for running your own CSV.
+every signal that fired and the rule behind its suggested action, a method page with the weights, the bands
+and the staleness thresholds, and `/try` for running your own CSV.
 
 ---
 
