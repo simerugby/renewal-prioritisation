@@ -32,6 +32,9 @@ Other commands:
 |---|---|
 | `npm run verify` | Prints the full ranking, the confidence spread and the model's sanity checks. Every number in this README comes from here. |
 | `npm run eval` | The head-to-head behind the AI decision (see [finding 5](#5-the-rules-i-wrote-score-92-on-this-data-and-0-when-the-wording-changes)). Runs the model columns too if a key is set. |
+| `npm test` | 52 unit tests over the CSV edge cases, validation rules and scoring invariants. |
+| `npm run smoke` | End-to-end checks against a running server: status codes, rendered content, AI failure paths. |
+| `npm run check` | Typecheck, lint, tests and verification in one command. |
 | `npm run build` | Production build. |
 
 ---
@@ -258,8 +261,16 @@ app with a message naming the column. A single row with a malformed date is quar
 
 **The data source is swappable.** `PortfolioSource` in `lib/data.ts` is a two-method interface. A
 warehouse query, an HTTP export or a CRM API is a new implementation and nothing else changes.
-`listPortfolio` already takes the paging arguments a server-side source would need, and only the top
-accounts are pre-rendered so the build does not grow linearly with the book.
+`listPortfolio` already takes the paging arguments a server-side source would need, and account pages
+render per request rather than being pre-generated, so build time does not grow with the size of the
+book.
+
+**A correctness bug worth naming, because it is invisible to types and unit tests.** An unknown
+customer id rendered the right "no such account" page under an HTTP **200**. `notFound()` cannot set a
+status once a response has begun streaming, and a `loading.tsx` anywhere above a route is what starts
+it. The fix was to scope the skeleton to the portfolio page with a route group, leaving the account
+route unwrapped. `npm run smoke` asserts both behaviours against a running server — status codes,
+rendered content, and the AI endpoint's failure paths.
 
 **Scale, honestly.** Scoring is O(n) with roughly forty arithmetic operations per account and the
 whole book is held in memory. Tens of thousands of accounts are fine. Millions are not, and the right

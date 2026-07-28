@@ -4,24 +4,44 @@ import AiBrief from '@/components/AiBrief';
 import DecisionRecorder from '@/components/DecisionRecorder';
 import EvidencePanel from '@/components/EvidencePanel';
 import { Card, ConfidenceBadge, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
-import { loadCustomer, loadPortfolio } from '@/lib/data';
+import { loadCustomer } from '@/lib/data';
 
 /**
- * Pre-render the accounts a CSM will actually open — the top of the priority
- * list — and render the rest on demand. Pre-rendering every account is fine at
- * 40 and is a build-time bomb at 40,000.
+ * Rendered per request rather than pre-generated, for two reasons.
+ *
+ * Correctness: `notFound()` inside a statically generated route is cached and
+ * served with HTTP 200. The not-found UI appeared but the status line said the
+ * resource existed, which is wrong and is the kind of thing that quietly breaks
+ * a monitor or a crawler.
+ *
+ * Scale: pre-rendering every account is fine at 40 and is a build-time bomb at
+ * 40,000. Per-request rendering costs nothing here — the portfolio is parsed and
+ * scored once per process and served from cache — and it is what a live data
+ * source would need anyway.
  */
-const PRERENDER_TOP_N = Number(process.env.PRERENDER_TOP_N ?? 25);
+export const dynamic = 'force-dynamic';
 
-export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  try {
-    const { rows } = await loadPortfolio();
-    return rows.slice(0, PRERENDER_TOP_N).map((r) => ({ id: r.customer.customerId }));
-  } catch {
-    return [];
-  }
+/**
+ * Metadata also performs the existence check, so an unknown id 404s early.
+ *
+ * The subtlety worth recording: `notFound()` cannot set a 404 once the response
+ * has begun streaming, and a `loading.tsx` anywhere above a route creates the
+ * Suspense boundary that starts it. With one at the app root, every unknown
+ * customer id rendered the correct not-found page under an HTTP 200.
+ *
+ * The fix is the route group: `app/(portfolio)/loading.tsx` scopes the skeleton
+ * to the portfolio page, which is the one that benefits from streaming, and
+ * leaves this route unwrapped so its 404 is a real 404. Both behaviours are
+ * asserted in `npm run smoke`.
+ */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const row = await loadCustomer(id).catch(() => null);
+  if (!row) notFound();
+  return {
+    title: `${row.customer.customerName} — Renewal Prioritisation`,
+    description: `${row.riskBand} risk, priority #${row.priorityRank}. ${row.playbook.action}.`,
+  };
 }
 
 export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
