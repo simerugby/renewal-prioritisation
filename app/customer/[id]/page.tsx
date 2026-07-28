@@ -164,8 +164,8 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
               </div>
             )}
             <p className="mt-2.5 text-[11px] leading-relaxed text-muted-2">
-              Tags above come from a keyword scanner, not a model. They are the fallback the AI brief
-              degrades to, and the control group it is measured against.
+              Tags above come from a keyword scanner, not a model. They select the triage list on the
+              portfolio page, and they are the control group the second read is measured against.
             </p>
           </Card>
 
