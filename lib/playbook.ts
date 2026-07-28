@@ -119,6 +119,45 @@ const RULES: Rule[] = [
       owner: 'CSM + Finance',
     }),
   },
+  /*
+   * Three flags that MATERIAL_NOTE_FLAGS already treats as material and that no
+   * rule acted on. Until this block existed they could raise the "the score is
+   * calm; the note is not" banner and leave the action underneath it reading
+   * "No intervention needed" — Mosaic Foods scored 3.6 with a missing PO and a
+   * buyer silent for 9 days, 27 days from renewal.
+   *
+   * They sit below the scored signals on purpose: a note is the tie-breaker when
+   * nothing measured has fired, not an override of something that has. Meridian
+   * and Ironwood both carry unresolved-issue and both keep the usage and billing
+   * plays that outrank it.
+   */
+  {
+    when: (_c, ctx) => flagged(ctx.noteFlags, 'budget-freeze'),
+    play: (_c, ctx) => ({
+      action: 'Confirm what the spending freeze covers before the renewal conversation',
+      urgency: 'This week',
+      rationale: `The notes record a spending or procurement freeze — "${ctx.noteFlags.find((f) => f.key === 'budget-freeze')?.quote}". No column in the file records a freeze, so the score cannot see it. Whether it stops the renewal or only new spend is the difference between a re-forecast and a paused upsell.`,
+      owner: 'CSM + AE',
+    }),
+  },
+  {
+    when: (_c, ctx) => flagged(ctx.noteFlags, 'paperwork-stuck') && ctx.daysToRenewal <= 60,
+    play: (_c, ctx) => ({
+      action: 'Chase the named missing document and put a date on it',
+      urgency: 'This week',
+      rationale: `The notes say the paperwork has stalled — "${ctx.noteFlags.find((f) => f.key === 'paperwork-stuck')?.quote}" — with ${ctx.daysToRenewal} days to renewal. Nothing higher in the table fired, so the note is the only thing on this account asking for action.`,
+      owner: 'CSM',
+    }),
+  },
+  {
+    when: (_c, ctx) => flagged(ctx.noteFlags, 'unresolved-issue'),
+    play: (_c, ctx) => ({
+      action: 'Get a written status on the open issue before the renewal conversation',
+      urgency: 'This week',
+      rationale: `The notes carry an unresolved product or service issue — "${ctx.noteFlags.find((f) => f.key === 'unresolved-issue')?.quote}". Nothing higher in the table fired, and an open issue with no written status becomes a negotiating position at renewal.`,
+      owner: 'CSM + Support lead',
+    }),
+  },
   {
     when: (_c, ctx) => ctx.confidenceLow,
     play: (_c, ctx) => ({
@@ -151,18 +190,41 @@ const RULES: Rule[] = [
     play: (_c, ctx) => ({
       action: 'Keep on the standard renewal cadence and re-check in two weeks',
       urgency: 'This month',
-      rationale: `Nothing here demands intervention, but ${ctx.daysToRenewal} days out with a moderate risk profile is worth a scheduled look rather than a reactive one.`,
+      rationale: `Nothing higher in the table fired, but ${ctx.daysToRenewal} days out with a moderate risk profile is worth a scheduled look rather than a reactive one.`,
       owner: 'CSM',
     }),
   },
 ];
 
-const DEFAULT_PLAY = (c: Customer, ctx: Ctx): Playbook => ({
-  action: 'No intervention needed — confirm the renewal on the normal cadence',
-  urgency: 'Scheduled',
-  rationale: `Every scored signal is in a healthy range and the renewal is ${ctx.daysToRenewal} days out. The most valuable thing a CSM can do with this account is spend the hour on a different one.`,
-  owner: 'CSM',
-});
+/**
+ * The last resort, and the only entry in the table that asserts an absence. That
+ * assertion has to be computed. "Every scored signal is in a healthy range"
+ * printed on Pivotal Legal, whose renewal-readiness signal sat at 65% of its
+ * range, and on Foxglove Charity at 80% on prior discount pressure — nothing
+ * checked before saying it. Now the highest signal is named with its value when
+ * it is above half its range, and a note tag no rule acted on is named rather
+ * than implied absent.
+ */
+const DEFAULT_PLAY = (_c: Customer, ctx: Ctx): Playbook => {
+  const worst = ctx.signals
+    .filter((s) => s.normalised !== null)
+    .sort((a, b) => (b.normalised ?? 0) - (a.normalised ?? 0))[0];
+  const signalText =
+    worst && (worst.normalised ?? 0) >= 0.5
+      ? `The highest scored signal is ${worst.label} at ${Math.round((worst.normalised ?? 0) * 100)}% of its range`
+      : 'No scored signal is above half its range';
+  const noteText = ctx.noteFlags.length
+    ? `The note is tagged ${ctx.noteFlags.map((f) => f.label.toLowerCase()).join(' and ')}; read it before you close the tab.`
+    : 'The most valuable thing a CSM can do with this account is spend the hour on a different one.';
+  return {
+    action: ctx.noteFlags.length
+      ? 'Read the note, then confirm the renewal on the normal cadence'
+      : 'No intervention needed — confirm the renewal on the normal cadence',
+    urgency: 'Scheduled',
+    rationale: `No rule in the table fired. ${signalText}, and the renewal is ${ctx.daysToRenewal} days out. ${noteText}`,
+    owner: 'CSM',
+  };
+};
 
 export function selectPlaybook(
   c: Customer,

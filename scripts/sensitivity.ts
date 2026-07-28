@@ -20,8 +20,8 @@
  */
 
 import { loadPortfolio } from '../lib/data';
-import { SIGNAL_WEIGHTS, SNAPSHOT_DATE, type SignalKey } from '../lib/config';
-import { scoreAll } from '../lib/scoring';
+import { CURVES, SIGNAL_WEIGHTS, SNAPSHOT_DATE, VALUE_FLOOR, deriveArrReference, type SignalKey } from '../lib/config';
+import { band, scoreAll } from '../lib/scoring';
 import type { Customer } from '../lib/types';
 
 /** Mulberry32. A seeded PRNG so this run is byte-identical to the next. */
@@ -132,6 +132,95 @@ async function main() {
     console.log(`    ${label.padEnd(12)} mean ${s.avg.toFixed(2)} places, worst ${s.max}`);
   }
 
+  // ---- 1b. The two multipliers the weight jitter never touches --------------
+  //
+  // priorityScore = riskScore * valueWeight * urgency, and the nine weights
+  // above move only the first term. VALUE_FLOOR sets how flat the value axis is:
+  // the ARR reaching the multiplier runs from GBP 12,000 to the GBP 210,000
+  // reference, 17.5x, and a floor of 0.45 delivers that as a 2.08x spread. The
+  // urgency curve sets how fast a distant renewal is discounted. Neither was
+  // perturbed until this block existed.
+  //
+  // Priority is recomputed here rather than re-scored, because neither parameter
+  // enters riskScore. The expression below is the priority line from
+  // lib/scoring.ts with a different floor and a different curve, so it can drift
+  // from it. The assertion checks that at the shipped values it still reproduces
+  // the shipped order exactly. Do not delete it to make a refactor pass.
+  const arrReference = deriveArrReference(customers.map((c) => c.arrGbp));
+  const rankedBy = (floor: number, urgencyPts: [number, number][]) =>
+    rows
+      .map((r) => ({
+        id: r.customer.customerId,
+        p:
+          r.riskScore *
+          (floor + (1 - floor) * Math.max(0, Math.min(1, r.customer.arrGbp / Math.max(1, arrReference)))) *
+          band(r.daysToRenewal, urgencyPts),
+      }))
+      .sort((a, b) => b.p - a.p)
+      .map((x) => x.id);
+
+  // Oakwell Design: risk #1, priority #5. The account the two-axis split is
+  // argued on, and the one whose position the floor actually decides.
+  const WATCH = 'CUST-1004';
+  const watchName = nameOf.get(WATCH) ?? WATCH;
+  const rankOf = (ids: string[], id: string) => ids.indexOf(id) + 1;
+
+  if (rankedBy(VALUE_FLOOR, CURVES.urgency).join() !== baseline.join()) {
+    throw new Error('the floor sweep does not reproduce the shipped ranking at the shipped parameters');
+  }
+
+  console.log(`\nValue floor: shipped at ${VALUE_FLOOR}, swept end to end`);
+  for (const f of [0, 0.27, 0.35, 0.45, 0.55, 0.63, 1]) {
+    const ranked = rankedBy(f, CURVES.urgency);
+    console.log(
+      `  floor ${f.toFixed(2)}   ${watchName} #${String(rankOf(ranked, WATCH)).padStart(2)}   top-5 kept ${overlap(baseline, ranked, 5)}/5   top-10 kept ${String(overlap(baseline, ranked, 10)).padStart(2)}/10   #1 ${nameOf.get(ranked[0]) ?? ranked[0]}`,
+    );
+  }
+
+  const rand3 = rng(20260721);
+  const floorRanks: number[] = [];
+  const jointRanks: number[] = [];
+  for (let t = 0; t < TRIALS; t++) {
+    const floor = VALUE_FLOOR * (1 + (rand3() * 2 - 1) * JITTER);
+    // Each urgency control point is jittered too, then clamped to [0, the point
+    // before it] so the result is still a discount curve rather than noise.
+    let prev = Infinity;
+    const pts = CURVES.urgency.map(([d, u]) => {
+      const y = Math.min(prev, Math.max(0, Math.min(1, u * (1 + (rand3() * 2 - 1) * JITTER))));
+      prev = y;
+      return [d, y] as [number, number];
+    });
+    floorRanks.push(rankOf(rankedBy(floor, CURVES.urgency), WATCH));
+    jointRanks.push(rankOf(rankedBy(floor, pts), WATCH));
+  }
+
+  const span = (xs: number[]) => {
+    const s = [...xs].sort((a, b) => a - b);
+    return { best: s[0], median: s[Math.floor(s.length / 2)], worst: s[s.length - 1] };
+  };
+  const fOnly = span(floorRanks);
+  const fBoth = span(jointRanks);
+  console.log(`\n  floor jittered +/-${JITTER * 100}%, ${TRIALS} trials`);
+  console.log(`    ${watchName} ranks #${fOnly.best} to #${fOnly.worst}, median #${fOnly.median}`);
+  console.log(`  floor and every urgency control point jittered +/-${JITTER * 100}%, ${TRIALS} trials`);
+  console.log(
+    `    ${watchName} ranks #${fBoth.best} to #${fBoth.worst}, median #${fBoth.median}, in the top 5 in ${((jointRanks.filter((r) => r <= 5).length / TRIALS) * 100).toFixed(0)}% of trials`,
+  );
+
+  // The limiting case, stated so nobody has to ask for it. Removing the floor
+  // AND the clamp at the reference makes priority straight expected loss,
+  // risk x ARR x urgency. That is a defensible ranking and it is not this one.
+  const expectedLoss = rows
+    .map((r) => ({ id: r.customer.customerId, p: (r.riskScore / 100) * r.customer.arrGbp * band(r.daysToRenewal, CURVES.urgency) }))
+    .sort((a, b) => b.p - a.p)
+    .map((x) => x.id);
+  console.log(`\n  Straight expected loss (no floor, no clamp): ${watchName} #${rankOf(baseline, WATCH)} -> #${rankOf(expectedLoss, WATCH)}`);
+  console.log('  accounts it promotes into the top 10:');
+  for (const id of expectedLoss.slice(0, 10)) {
+    const from = rankOf(baseline, id);
+    if (from > 10) console.log(`    ${(nameOf.get(id) ?? id).padEnd(26)} #${from} -> #${rankOf(expectedLoss, id)}`);
+  }
+
   // ---- 2. Ablation ----------------------------------------------------------
   console.log('\nAblation: remove one signal entirely and re-rank');
   console.log('  signal                     top-5 kept   top-10 kept   new #1');
@@ -149,6 +238,9 @@ async function main() {
   console.log('A ranking that survives a 40% jitter on every weight is telling you about the accounts,');
   console.log('not about the arithmetic. Where it does not survive, the honest response is that those');
   console.log('positions are not distinguishable and should not be presented as if they were.');
+  console.log('The value floor is the exception, and it is why this script now sweeps it: no weighting');
+  console.log('moves Oakwell Design out of the top 5, and the floor alone moves it between #2 and #6.');
+  console.log('That number is a commercial judgement about how much a small account is allowed to matter.');
 }
 
 main().catch((e) => {

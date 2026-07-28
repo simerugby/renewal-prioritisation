@@ -31,7 +31,7 @@ const OUTPUTS = [
   {
     name: 'Confidence',
     question: 'How much did we actually know?',
-    body: 'Never folded into the other two. A signal that is missing or too old is removed and the rest re-normalise, so the number stays comparable — what it costs is confidence.',
+    body: 'Never folded into the other two. A signal that is missing or too old is removed and the rest re-normalise, so the number stays comparable. Confidence drops when more than 5% of the weight is missing, when the usage feed is stale, or when two signals contradict each other.',
     tone: 'text-risk-stable',
   },
 ];
@@ -160,7 +160,7 @@ export default async function MethodPage() {
         eyebrow="The argument"
         title="Where risk and priority disagree"
         subtitle="The clearest illustration of why they are two numbers rather than one."
-        footnote={`Priority = risk × value weight × urgency. The value weight runs from ${VALUE_FLOOR} to 1 rather than 0 to 1, so a small account in real trouble stays visible instead of being ranked out of existence by ARR.`}
+        footnote={`Priority = risk × value weight × urgency. The value weight runs from ${VALUE_FLOOR} to 1 rather than 0 to 1, so a small account in real trouble stays visible instead of being ranked out of existence by ARR. That compresses a 17.5× spread in ARR into a 2.08× multiplier, and it is the number this ranking is most sensitive to: move it ±40% and Oakwell Design lands anywhere between #2 and #6, and at a floor of 0 it falls to #20. npm run sensitivity prints the sweep.`}
       >
         {moved.length === 0 ? (
           <p className="text-[12px] text-muted">No account moves by three places or more.</p>

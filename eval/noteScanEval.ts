@@ -78,7 +78,19 @@ export interface EvalResult {
   expectedCount: number;
   caught: number;
   missed: { id: string; label: string; note: string }[];
+  /**
+   * Only measurable on the notes labelled `null`. There are two of them, so a
+   * clean false-positive count here is a weak result, not a strong one.
+   */
   falsePositives: { id: string; key: string }[];
+  /**
+   * Flags raised on a labelled note beyond its one label. The eval cannot call
+   * these right or wrong — a note can honestly carry two categories — so they
+   * are counted rather than scored. Without this line the only false positives
+   * the scanner can record are on those two null notes, which makes "zero false
+   * positives" a fact about the label set rather than about the scanner.
+   */
+  extraFlags: { id: string; label: string; extra: string[] }[];
 }
 
 let cachedRows: Record<string, string>[] | null = null;
@@ -96,6 +108,7 @@ export function runNoteScanEval(): EvalResult {
   const rows = loadRowsSync();
   const missed: EvalResult['missed'] = [];
   const falsePositives: EvalResult['falsePositives'] = [];
+  const extraFlags: EvalResult['extraFlags'] = [];
   let caught = 0;
   let expectedCount = 0;
 
@@ -108,12 +121,14 @@ export function runNoteScanEval(): EvalResult {
       expectedCount++;
       if (flags.includes(expected)) caught++;
       else missed.push({ id, label: expected, note: r.customer_notes });
+      const extra = flags.filter((f) => f !== expected);
+      if (extra.length) extraFlags.push({ id, label: expected, extra });
     } else if (flags.length > 0) {
       falsePositives.push({ id, key: flags.join('+') });
     }
   }
 
-  return { total: rows.length, expectedCount, caught, missed, falsePositives };
+  return { total: rows.length, expectedCount, caught, missed, falsePositives, extraFlags };
 }
 
 /** Async variant for use inside the Next.js runtime. */

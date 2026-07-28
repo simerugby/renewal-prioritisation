@@ -248,7 +248,7 @@ export function validateSecondRead(row: ScoredCustomer, raw: RawSecondRead): Omi
  * These drive the DETERMINISTIC portfolio filter, and that is deliberate. On
  * this dataset the keyword scanner produces a usable 9-account list at 71%
  * precision; the model, at the recall needed to catch the flagship account,
- * flags 22 of 27 calm accounts, which is not a triage list. Measured, not assumed
+ * flags 19 of 28 calm accounts, which is not a triage list. Measured, not assumed
  * — see `npm run eval:beyond`.
  */
 export const MATERIAL_NOTE_FLAGS = ['exit-signal', 'sponsor-loss', 'competitive-threat', 'budget-freeze', 'paperwork-stuck', 'unresolved-issue'];
@@ -297,7 +297,7 @@ export function buildFallbackSecondRead(row: ScoredCustomer, reason: string): Se
 }
 
 
-/** Accounts whose score is calm and whose note is not. The portfolio-level view. */
+/** Risk total under 45 (Stable or Watch) plus at least one material note flag. Tests the total, never the individual signals. The portfolio-level view. */
 export function isQuietButFlagged(row: ScoredCustomer): boolean {
   if (row.riskBand !== 'Stable' && row.riskBand !== 'Watch') return false;
   return row.noteFlags.some((f) => RISK_FLAGS.includes(f.key));

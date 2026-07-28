@@ -169,8 +169,12 @@ async function main() {
   console.log(`Caught by rules: ${evalResult.caught} (${Math.round((evalResult.caught / evalResult.expectedCount) * 100)}%)`);
   console.log(`Missed by rules: ${evalResult.missed.length}`);
   for (const m of evalResult.missed) console.log(`  MISS ${m.id} [${m.label}] "${m.note}"`);
-  console.log(`False positives: ${evalResult.falsePositives.length}`);
+  console.log(
+    `False positives: ${evalResult.falsePositives.length} — measurable only on the ${evalResult.total - evalResult.expectedCount} notes labelled as carrying nothing extra`,
+  );
   for (const f of evalResult.falsePositives) console.log(`  FP   ${f.id} [${f.key}]`);
+  console.log(`Extra flags on labelled notes, counted but not scored: ${evalResult.extraFlags.length}`);
+  for (const e of evalResult.extraFlags) console.log(`  EXTRA ${e.id} labelled ${e.label}, also flagged ${e.extra.join('+')}`);
 
   // Sanity assertions — these fail the build if the model degrades.
   const errors: string[] = [];

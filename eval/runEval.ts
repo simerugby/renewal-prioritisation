@@ -65,7 +65,8 @@ async function main() {
   console.log(`  labelled risks      ${inCorpus.expectedCount}`);
   console.log(`  rules caught        ${inCorpus.caught}  (${pct(inCorpus.caught, inCorpus.expectedCount)})`);
   console.log(`  rules missed        ${inCorpus.missed.length}`);
-  console.log(`  false positives     ${inCorpus.falsePositives.length}`);
+  console.log(`  false positives     ${inCorpus.falsePositives.length}  (only measurable on the 2 notes labelled null)`);
+  console.log(`  extra flags         ${inCorpus.extraFlags.length}  (raised on a labelled note beyond its label; counted, not scored)`);
 
   let llmInCorpus = 0;
   let llmInCorpusDetected = 0;

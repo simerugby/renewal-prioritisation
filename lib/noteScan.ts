@@ -3,9 +3,10 @@
  *
  * `customer_notes` is the only column no arithmetic can read, and it carries
  * facts that change the answer. On CUST-1025 (Quantum Public Sector, the largest
- * account in the book) every one of the nine structured signals is healthy and
- * the risk score is 14.9 — while the note says the sponsor moves roles on
- * 1 August with no replacement recorded.
+ * account in the book) the risk score is 14.9, which reaches nobody's queue, while
+ * the note says the sponsor moves roles on 1 August with no replacement recorded.
+ * `executive_sponsor_status` does read Inactive and carries 8.6 of that 14.9. What
+ * no column carries is the date, or the fact that no replacement was named.
  *
  * That gap is the entire justification for spending an LLM call. But "an LLM
  * would be better here" is an assertion until it is measured, so this file
@@ -130,7 +131,12 @@ const RULES: Rule[] = [
   },
   {
     key: 'ownerless-blocker',
-    label: 'Blocker with no named owner',
+    // "No named owner" was false of half the notes this rule catches. Atlas
+    // Manufacturing (priority #4) reads "the internal owner has not confirmed
+    // which tools will remain" — there is an owner, the decision is missing —
+    // and the old label rendered directly above that quote. The patterns catch
+    // two things, an unowned blocker and an undecided one, so the label says so.
+    label: 'Unowned or undecided blocker',
     patterns: [
       /no named owner/i,
       /(has|have) not (named|confirmed|nominated)/i,

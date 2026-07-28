@@ -95,7 +95,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const secondRead =
     row.priorityRank <= LIVE_ON_OPEN_TOP_N ? null : await precomputedSecondRead(c.customerId);
 
-  // The case this product exists for: nine structured signals are calm and the
+  // The case this product exists for: the composite score is calm and the
   // free-text note is not. Quantum Public Sector is the largest account in the
   // book, scores 15, and its note says the sponsor leaves on 1 August. Putting
   // that next to the score is the difference between the app making the point
@@ -123,9 +123,10 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
         {quietButFlagged && (
           <p className="mt-2.5 rounded border border-risk-elevated/30 bg-risk-elevated-bg px-3 py-2 text-[12px] leading-relaxed">
             <span className="font-semibold text-risk-elevated">The score is calm; the note is not.</span>{' '}
-            Every scored signal sits in a normal range, but the account note flags{' '}
-            {materialNoteFlags.map((f) => f.label.toLowerCase()).join(' and ')}. Nothing in the structured
-            data can see this.
+            The risk score is {row.riskScore.toFixed(0)} out of 100, inside the{' '}
+            {row.riskBand.toLowerCase()} band, but the account note flags{' '}
+            {materialNoteFlags.map((f) => f.label.toLowerCase()).join(' and ')}. The score is computed
+            from the structured columns and never reads the note.
           </p>
         )}
       </div>

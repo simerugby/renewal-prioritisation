@@ -33,7 +33,7 @@ model output, and to a keyword scanner below that, and says on screen which one 
 | `npm run verify` | Prints the ranking and every figure quoted in these two documents. |
 | `npm run sensitivity` | Perturbs the weights 1,000 times to test whether the ranking survives them. |
 | `npm run eval` / `eval:beyond` / `eval:cross` | The three measurements behind the AI decision. |
-| `npm test` | 119 tests: unit, property-based, a second company's export, model-output validation. |
+| `npm test` | 118 tests: unit, property-based, a second company's export, model-output validation. |
 | `npm run smoke` | End-to-end against a running server: status codes, content, AI failure paths. |
 | `npm run check` | Typecheck, lint, tests, secret scan, verification. |
 
@@ -96,9 +96,14 @@ and sentiment 5, sentiment halves past 45 days, and **drops out entirely past 12
 7 accounts' NPS from scoring.
 
 Excluded signals are not scored as zero. Their weight is removed and the rest re-normalise, so an
-account measured on 51% of the model sits on the same 0–100 scale as one on 100%. What staleness costs
-is **confidence**, shown separately and never folded into risk. The honest response to a 238-day-old
-data point is a wider band, not a smaller number.
+account measured on 51% of the model sits on the same 0–100 scale as one on 100%. The honest response
+to a 238-day-old data point is to drop it and name the gap, not to average it in.
+
+Confidence is shown separately and never folded into risk. It drops when more than 5% of the model's
+weight is missing, when the usage feed is stale, or when two signals contradict each other. Sentiment
+is 5 of those 100 points, so dropping it on its own leaves 95% of the weight applied — not enough to
+move an account off **High**, which is why Everfield Agriculture reads High with its 238-day NPS
+excluded and named on the page.
 
 The same rule applies to usage. **Stonebridge Education** (£95,000, renewing in 25 days) last synced
 33 days before the snapshot, so its "last 30 days" figures describe a window that closed a month
@@ -131,8 +136,13 @@ Usage growing, NPS 46, funding approved, invoice current. It scores **14.9** and
 note reads *"the original sponsor moves roles on 1 August and no replacement is recorded."*
 
 Before reaching for a model I wrote a keyword scanner and measured it, because "an LLM would be better
-here" is an assertion until tested. It caught **36 of 38** hand-labelled note risks with zero false
-positives — which looked like an argument for deleting the API call. That number is contaminated: **I
+here" is an assertion until tested. It caught **36 of 38** hand-labelled note risks and raised nothing
+on the two notes I labelled as carrying no extra risk — which looked like an argument for deleting the
+API call. Read the second half narrowly: those two notes are the only ones the eval can record a false
+positive on, so it never scores the extra flags that six of the other 38 accounts also carry. `npm run
+verify` now prints those six, and one was wrong — Atlas Manufacturing's note names an internal owner and
+the scanner still tagged it "Blocker with no named owner", which is why that label now reads "Unowned or
+undecided blocker". The 36 of 38 is contaminated too: **I
 wrote those regexes after reading all forty notes.** So I rewrote 14 of the same facts as another team
 would phrase them and re-ran:
 
@@ -167,7 +177,7 @@ Full methodology, including where my own measurements were wrong twice, is in
 | **Contradictions lower confidence, never risk** | Resolving them silently, in either direction, invents a fact. | The app declines to answer the hardest cases. That *is* the answer. |
 | **Next action by decision table, not by model** | Routing attention is a small, knowable answer space. A rule can be read and argued with. | Less fluent phrasing than a model would produce. |
 | **One LLM call, and it cannot move a number** | The score is computed server-side and passed to the model as read-only context — in fact the score is withheld entirely, so it reads the note independently. | The insight is ignorable. Correct: an unreproducible output must not reorder a work queue. |
-| **The triage list stays deterministic** | Measured, not assumed. The rules select 9 accounts at 71% precision; the model, at the recall needed to catch Quantum, flags 22 of 28 calm accounts. A list of 22 is not a list. | The model's better recall. It reads the note instead. |
+| **The triage list stays deterministic** | Measured, not assumed. The rules select 9 accounts at 71% precision; the model, at the recall needed to catch Quantum, flags 19 of 28 calm accounts. A list of 19 is not a list. | The model's better recall. It reads the note instead. |
 | **Everything anchors to the stated 2026-07-21 snapshot** | Using `new Date()` would make "18 days to renewal" drift daily and no figure here would reproduce. | The app is not live. It is honest about being a snapshot. |
 
 **On cost.** One call per account, on demand — never on page load, never looped over the portfolio.

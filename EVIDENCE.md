@@ -4,8 +4,8 @@ Supporting material for [README.md](README.md), which answers the questions you 
 the working underneath: the measurements, the methodology, and the places where testing my own
 assumptions changed my mind. Nothing here is required reading — the README stands on its own.
 
-Every figure reproduces from a command. `npm run verify`, `npm run sensitivity`, `npm run eval`,
-`npm run eval:beyond`, `npm run eval:cross`.
+Every figure reproduces from a command, except two recall figures flagged where they appear.
+`npm run verify`, `npm run sensitivity`, `npm run eval`, `npm run eval:beyond`, `npm run eval:cross`.
 
 ---
 
@@ -41,6 +41,30 @@ So the ends of the list are a genuine ordering and **the middle is not**. An acc
 reasonably be at #18 or #28, and presenting that as a precise position would be false precision from a
 model that has no outcome data to justify it. The product consequence: treat the top ten as an order
 and the rest as a band. That is stated on the method page rather than left for a reader to discover.
+
+**The parameter that does move the answer is not a weight.** Priority is risk × value weight × urgency,
+and the nine weights only touch the first term. The value floor of 0.45 decides how flat the second one
+is: it compresses a 17.5× spread in ARR into a 2.08× multiplier. `npm run sensitivity` now jitters it
+too, and it moves the top of the list further than any of the nine weights does.
+
+| Value floor | Where Oakwell Design lands |
+|---|---|
+| 0.27 (−40%) | #6 |
+| **0.45 (shipped)** | **#5** |
+| 0.63 (+40%) | #2 |
+| 0 — no floor, so the value axis is ARR, still clamped at the £210,000 reference | #20 |
+
+Across 1,000 trials with the floor jittered ±40% Oakwell ranges #2 to #6, median #5; jitter the urgency
+curve as well and it ranges #2 to #8 and sits in the top 5 in 73% of them. So the top 5 is a property of
+the data under any weighting, and Oakwell's position inside it is a property of the floor.
+
+Worth saying plainly, because straight expected loss — risk × ARR × urgency, no floor and no clamp — is
+a defensible ranking and it is not this one. It puts Oakwell at #20: the highest-risk account in the
+book, renewing in 13 days, ranked below nineteen accounts in better shape because it is worth £12,000.
+It also promotes Sterling Aviation #14 → #7 and Quantum Public Sector #15 → #8, both of which the
+note-risk triage list surfaces independently. The floor is a commercial judgement about how much a small
+account is allowed to matter, and I would want an operator to argue with it rather than inherit it.
+
 ---
 
 ## Three columns I did not score, and the evidence for each
@@ -118,16 +142,22 @@ systems on "does this note add risk the signals do not already have":
 
 | | Precision | Recall | Accounts it puts on the list |
 |---|---|---|---|
-| Keyword rules | 71% | 50% | **9 — £1,281,000** |
-| `gpt-4.1-nano` | 68% | 96% | 22 of 28 calm accounts |
+| Keyword rules | 71% | 48% | **9 — £1,281,000** |
+| `gpt-4.1-nano` | 67% | 80% | 19 of 28 calm accounts |
 
-A list of 22 out of 28 is not a triage list, it is the book. So the rules select the nine accounts on
+Two of the model's false positives, Greenway Bank and BluePeak Software, are a disagreement about the
+question rather than a model error: the prompt tells the model to answer yes to a stalled PO, and my
+labels answer no because the contradiction detector already puts that pair on the account page. Count
+those two as correct and the model's precision is 73%. The table quotes 67%.
+
+A list of 19 out of 28 is not a triage list, it is the book. So the rules select the nine accounts on
 the portfolio page and the model reads the note once you are on one. Each does the job it measurably
 does better.
 
 **One caveat I will not bury: I tuned that prompt twice against 40 labels I wrote myself.** The first
-version biased to "no" (recall 25%), the second to "yes" (recall 96%). Those bracket the answer rather
-than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
+version biased to "no" (recall 25%), the second to "yes" (recall 96%) — both earlier prompt versions,
+not the one in the table above, and both scored before I corrected the Harbor Retail label. Those
+bracket the answer rather than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
 above its own numbers. `eval:cross` is the closest thing to an
 independent check, and even that is qualified: I wrote the fixture and its labels too. What is
 genuinely true of it is that nothing in the system was tuned for it — same prompt template, same
@@ -181,7 +211,7 @@ whole book is held in memory. Tens of thousands of accounts are fine. Millions a
 answer there is to push scoring into the warehouse and serve pre-scored pages, which is the seam
 above, not a rewrite.
 
-**119 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
+**118 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
 the author thought of, which on a 40-row file is a weak claim. `lib/properties.test.ts` uses
 `fast-check` to generate thousands of portfolios per run (unmapped enums, negative ARR, dates
 centuries apart, lone surrogates, empty books, duplicate ids) and asserts invariants that must hold
@@ -223,8 +253,12 @@ npm run sensitivity   # weight perturbation and ablation, fixed seed
 npm run eval          # keyword rules vs model on note detection
 npm run eval:beyond   # the question the product actually asks
 npm run eval:cross    # the same call on a company the system has never seen
-npm test              # 119 tests, including the model-output validators
+npm test              # 118 tests, including the model-output validators
 ```
 
-Nothing in the README or in this file is estimated or recalled. Where a number could not be
-reproduced by a command, it was removed rather than rounded.
+Every number in the README and in this file is printed by one of the commands above, with two
+exceptions: the 25% and 96% recalls of the two discarded prompt versions. Both were recorded from
+runs I cannot reproduce, because neither prompt is still in the repo. They are in the document
+because the tuning history is the caveat — but they are the only two figures here you have to take
+on trust, and you should read them as the range I searched rather than as measurements of anything
+that ships.

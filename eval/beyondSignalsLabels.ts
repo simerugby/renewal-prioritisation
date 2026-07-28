@@ -17,6 +17,21 @@
  * So: labelled by hand, against the second question, with the reason recorded.
  * The reasons matter more than the verdicts — a reviewer who disagrees with a
  * line can see precisely what I was weighing.
+ *
+ * ONE THING TO KNOW BEFORE DISAGREEING WITH A LINE. "The structured signals"
+ * here means everything the app derives without a model: the nine scored
+ * signals AND the contradiction detector. That is why Greenway Bank and
+ * BluePeak Software are `false` — the unsigned order form and the missing PO
+ * each sit next to a "Verbal commitment, unresolved billing" contradiction the
+ * app already puts on the page — while Mosaic Foods, the same fact pattern, is
+ * `true`, because its invoice reads Current and no contradiction fires.
+ *
+ * The prompt in lib/secondRead.ts describes only the nine signals and tells the
+ * model to answer yes to a stalled PO. So on those two accounts the model is
+ * marked wrong for following its instructions. I found that after the batch was
+ * frozen and left it rather than widening the prompt and regenerating, because
+ * the disagreement is real and a reviewer should see it: `npm run eval:beyond`
+ * prints it under the false-positive list.
  */
 
 export interface BeyondLabel {
@@ -31,7 +46,7 @@ export const BEYOND_SIGNALS_LABELS: Record<string, BeyondLabel> = {
   'CUST-1003': { addsRisk: true, why: 'Vendor consolidation. No signal in the model can see a competitive review.' },
   'CUST-1004': { addsRisk: false, why: 'Champion gone is already in the sponsor field; 120 days of silence is already in engagement recency. The note restates both.' },
   'CUST-1005': { addsRisk: true, why: 'The QBR deck contradicts the seat count. A data-integrity conflict no signal can detect.' },
-  'CUST-1006': { addsRisk: false, why: 'Store closures explain the decline rather than adding risk. This is the explains-a-weak-signal case.' },
+  'CUST-1006': { addsRisk: true, why: 'Store closures explain the decline, and I first labelled this false on that clause alone. The note also says finance requested flexible pricing — the same kind of demand I called additive on CUST-1007, CUST-1010 and CUST-1028, and the discountPressure signal reads last renewal\'s discount rather than a live request. Mitigating and additive at once, and addsRisk is the question this file asks.' },
   'CUST-1007': { addsRisk: true, why: 'Procurement expecting a flat renewal is a commercial ceiling nothing else records.' },
   'CUST-1008': { addsRisk: true, why: '"Faster than expected" is the operative phrase, and no QBR is scheduled. Seasonality alone would be mitigating.' },
   'CUST-1009': { addsRisk: false, why: 'Unsigned order form and a disputed charge are both already visible: invoice_status is Disputed and the app flags the verbal-commitment contradiction.' },
@@ -50,7 +65,7 @@ export const BEYOND_SIGNALS_LABELS: Record<string, BeyondLabel> = {
   'CUST-1022': { addsRisk: true, why: 'Engineering closed the incidents while the sponsor wants a written remediation plan. The disagreement is the risk, and support strain only counts tickets.' },
   'CUST-1023': { addsRisk: false, why: 'A second site opening. Opportunity.' },
   'CUST-1024': { addsRisk: true, why: 'The commercial contact changed in July and sponsor status still reads Unknown, so the change itself is uncaptured.' },
-  'CUST-1025': { addsRisk: true, why: 'THE case. Sponsor moves roles on 1 August with no replacement, on the largest account in the book, and every scored signal is healthy.' },
+  'CUST-1025': { addsRisk: true, why: 'THE case. Largest account in the book. executive_sponsor_status does read Inactive and carries 8.6 of the 14.9, but no column carries the 1 August date or the fact that no replacement was named, and at 14.9 it ranks #15 of 40.' },
   'CUST-1026': { addsRisk: false, why: 'PO missing against a verbal commitment with an overdue invoice — the contradiction detector already surfaces this pair.' },
   'CUST-1027': { addsRisk: true, why: 'A competitor being trialled by the finance team. No signal sees competition.' },
   'CUST-1028': { addsRisk: true, why: 'The renewal depends on a non-profit pricing exception being granted. A commercial precondition.' },

@@ -8,9 +8,11 @@ import type { ScoredCustomer } from '@/lib/types';
 import { ConfidenceBadge, EmptyState, RiskPill, gbp } from './ui';
 
 /**
- * True when every scored signal is calm and the free-text note is not. These are
- * the accounts a purely quantitative queue walks straight past, so the list has
- * to mark them even though the score does not move.
+ * True when the composite score lands in the Stable or Watch band and the note
+ * carries a material flag. It says the total is calm, not that every signal is —
+ * Greenway Bank scores 13 with a disputed invoice. These are the accounts a
+ * purely quantitative queue walks straight past, so the list has to mark them
+ * even though the score does not move.
  */
 function isQuietButFlagged(r: ScoredCustomer): boolean {
   if (r.riskBand !== 'Stable' && r.riskBand !== 'Watch') return false;
@@ -247,7 +249,7 @@ function PortfolioTableView({ rows, view }: { rows: ScoredCustomer[]; view: stri
 
         <label
           className="flex cursor-pointer items-center gap-1.5 text-[12px] text-muted"
-          title="Accounts whose scored signals are calm and whose account note is not. A risk-sorted queue never reaches these."
+          title="Accounts scoring in the stable or watch band whose account note says otherwise. A risk-sorted queue never reaches these."
         >
           <input
             type="checkbox"

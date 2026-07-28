@@ -58,7 +58,7 @@ assert_contains "portfolio lists ranked accounts" "$home" "Northstar"
 assert_contains "portfolio totals the book"       "$home" "4,431,000"
 
 detail=$(body "$BASE/customer/CUST-1025")
-assert_contains "account page shows its evidence" "$detail" "Evidence behind the score"
+assert_contains "account page shows its evidence" "$detail" "Points shown sum to the risk score of"
 assert_contains "account page shows the raw note" "$detail" "moves roles on 1 August"
 
 # The AI endpoint must answer usefully with or without a key.

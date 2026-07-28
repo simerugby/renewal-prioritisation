@@ -49,7 +49,7 @@ export default async function PortfolioPage() {
   // The accounts a purely quantitative queue never reaches: the score is calm
   // and the account note is not. Deterministic on purpose — the keyword scanner
   // produces a usable list here, and the model, tuned to the recall needed to
-  // catch the flagship account, flags 22 of 27 calm accounts. Measured, not
+  // catch the flagship account, flags 19 of the 28 calm accounts. Measured, not
   // assumed: `npm run eval:beyond`.
   const quietButFlagged = rows.filter(
     (r) =>
@@ -153,7 +153,7 @@ export default async function PortfolioPage() {
       {quietButFlagged.length > 0 && (
         <Card
           title="The score is calm; the note is not"
-          subtitle="Every scored signal on these accounts sits in a normal range, and the free-text note says otherwise. A risk-sorted queue never reaches them."
+          subtitle="These accounts all score in the stable or watch band, and the free-text note says otherwise. A risk-sorted queue never reaches them."
         >
           <p className="tnum mb-3 text-[13px]">
             <span className="font-semibold">{quietButFlagged.length} accounts</span>

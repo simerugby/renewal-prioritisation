@@ -1,4 +1,4 @@
-import { SIGNAL_RATIONALE, type SignalKey } from '@/lib/config';
+import { CONFIDENCE_COVERAGE_THRESHOLDS, SIGNAL_RATIONALE, type SignalKey } from '@/lib/config';
 import type { ScoredCustomer } from '@/lib/types';
 
 /**
@@ -71,7 +71,9 @@ export default function EvidencePanel({ row }: { row: ScoredCustomer }) {
           <p className="mt-2 text-[11px] leading-relaxed text-muted-2">
             Excluded signals are not scored as zero — their weight is removed and the remaining signals
             re-normalise, so this account is still measured on the same 0–100 scale. What it costs is
-            confidence, not risk.
+            confidence, never risk, and only when more than{' '}
+            {Math.round((1 - CONFIDENCE_COVERAGE_THRESHOLDS[0]) * 100)}% of the model&rsquo;s weight is
+            missing.
           </p>
         </div>
       )}

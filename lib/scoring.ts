@@ -206,7 +206,10 @@ function computeSignals(
   // --- Sentiment, age-discounted -------------------------------------------
   // This is the sharpest rule in the model. An NPS response from 238 days ago is
   // not evidence about today, so it is excluded outright rather than quietly
-  // averaged in. What it costs the account is confidence, not risk.
+  // averaged in. Its weight leaves the model instead of scoring zero. Sentiment
+  // is 5 of the 100 points, so on its own that drop leaves coverage at exactly
+  // 95%, which is not below the coverage threshold — the confidence level does
+  // not move, and the account page names the exclusion instead.
   const npsAge = c.npsResponseDate ? daysBetween(c.npsResponseDate, asOf) : null;
   if (c.npsScore === null || npsAge === null) {
     push(
@@ -302,6 +305,7 @@ function computeConfidence(
   coverage: number,
   usageAgeDays: number,
   contradictions: Contradiction[],
+  excludedLabels: string[],
 ): { level: ConfidenceLevel; reasons: string[] } {
   const reasons: string[] = [];
   let penalty = 0;
@@ -333,7 +337,24 @@ function computeConfidence(
     );
   }
 
-  if (reasons.length === 0) reasons.push('All signals present and synced within a day of the snapshot.');
+  // The no-penalty case still has to say something true. Sentiment is 5 of the
+  // 100 points, so an account whose only gap is a stale NPS sits at exactly 95%
+  // coverage and takes no penalty under the strict `<` above. This line used to
+  // read "All signals present" on six accounts whose evidence panel listed the
+  // exclusion. It now reports the coverage and names what was dropped. Nothing
+  // here changes the penalty, the level or the score.
+  if (reasons.length === 0) {
+    const applied = `${Math.round(coverage * 100)}% of the model's weight was applied`;
+    const synced =
+      usageAgeDays > 0
+        ? `synced ${usageAgeDays} day${usageAgeDays === 1 ? '' : 's'} before the snapshot`
+        : 'synced on the snapshot date or later';
+    reasons.push(
+      excludedLabels.length > 0
+        ? `${excludedLabels.join(' and ')} could not be scored, so ${applied} — a gap too small to lower the confidence level. The usage feed was ${synced}.`
+        : `${applied}, and the usage feed was ${synced}.`,
+    );
+  }
 
   const level: ConfidenceLevel =
     penalty <= CONFIDENCE_LEVEL_CUTOFFS.high ? 'High' : penalty <= CONFIDENCE_LEVEL_CUTOFFS.medium ? 'Medium' : 'Low';
@@ -381,6 +402,7 @@ export function scoreCustomer(
     modelCoverage,
     usageDataAgeDays,
     contradictions,
+    signals.filter((s) => s.normalised === null).map((s) => s.label),
   );
 
   // PRIORITY. Risk answers "is this bad"; priority answers "where does the next

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DIRECTION_LABELS, type SecondReadResult } from '@/lib/secondRead';
+import { DIRECTION_LABELS, type Direction, type SecondReadResult } from '@/lib/secondRead';
 import { Skeleton } from './ui';
 
 /**
@@ -35,19 +35,51 @@ const DIRECTION_TONE: Record<string, string> = {
 /**
  * Put the findings that carry weight first.
  *
- * The model returns them in note order, which on Sterling Aviation meant a panel
- * headed "Adds risk the score cannot see" opened with "the major incident being
- * resolved reduces immediate risk" — true, and the least useful sentence there.
- * Reassurance reads as the headline when it comes first. This is a display
- * ordering only; nothing is hidden and the clause numbers still point at the
- * note, so the reader can see the original sequence.
+ * The model returns them in note order, which on Sterling Aviation (CUST-1035)
+ * meant a panel headed "Adds risk the score cannot see" opening with "A major
+ * incident has been resolved, indicating recent issue resolution." — true, and
+ * the least useful sentence there. Reassurance reads as the headline when it
+ * comes first. This is a display ordering only; nothing is hidden and the clause
+ * numbers still point at the note, so the reader can see the original sequence.
+ *
+ * The word boundary is load-bearing, and it was not a word boundary until now.
+ * The character before the group was a literal backspace, 0x08, not the two
+ * characters \ and b, so the pattern asked for a backspace in the prose. It
+ * never matched, and this sort had done nothing since the commit that added it.
+ * Written properly it moves the reassuring finding to the bottom on 2 of the 40
+ * committed accounts, CUST-1035 and CUST-1030, and marks 7 findings reassuring
+ * in total. No boundary at the end: "mitigat", "improv" and "satisf" are
+ * prefixes on purpose. The one at the front is what keeps "unresolved" from
+ * matching "resolved" and "dissatisfaction" from matching "satisf".
  */
-const REASSURING = /(resolved|resolving|no immediate|reduces? (the )?risk|mitigat|positive|improv|recover(ed|ing)|strong|healthy|satisf)/i;
+const REASSURING = /\b(resolved|resolving|no immediate|reduces? (the )?risk|mitigat|positive|improv|recover(ed|ing)|strong|healthy|satisf)/i;
 
 function orderFindings<T extends { whatItMeans: string }>(findings: T[]): T[] {
   return [...findings].sort(
     (a, b) => Number(REASSURING.test(a.whatItMeans)) - Number(REASSURING.test(b.whatItMeans)),
   );
+}
+
+/**
+ * The answers the badge cannot show.
+ *
+ * `deriveDirection` picks one direction by precedence — risk, then explanation,
+ * then opportunity — but the three questions are independent and the model can
+ * answer yes to more than one. On the committed batch that happens on 10 of the
+ * 40 accounts, and the badge can only carry the first yes.
+ *
+ * Everfield Agriculture is the account that shows why it matters: it wears "Adds
+ * risk the score cannot see" over two findings that both describe an ordinary
+ * seasonal shutdown, because the model also answered yes to the explanation
+ * question. Nothing is overridden here — there is no ground truth in the app to
+ * prefer one answer over the other — so the other answer is printed instead.
+ */
+function alsoAnswered(result: SecondReadResult): string[] {
+  const yes: Direction[] = [];
+  if (result.addsRiskBeyondSignals) yes.push('adds-risk');
+  if (result.explainsAWeakSignal) yes.push('explains-a-weak-signal');
+  if (result.addsOpportunity) yes.push('adds-opportunity');
+  return yes.filter((d) => d !== result.direction).map((d) => DIRECTION_LABELS[d]);
 }
 
 export default function SecondRead({
@@ -132,13 +164,30 @@ export default function SecondRead({
 
   if (!result) return null;
 
+  const alsoYes = alsoAnswered(result);
+
   return (
     <div className="flex flex-col gap-3">
-      <span
-        className={`inline-flex w-fit items-center rounded border px-2 py-1 text-[11px] font-medium ${DIRECTION_TONE[result.direction]}`}
-      >
-        {DIRECTION_LABELS[result.direction]}
-      </span>
+      <div className="flex flex-col gap-1.5">
+        <span
+          className={`inline-flex w-fit items-center rounded border px-2 py-1 text-[11px] font-medium ${DIRECTION_TONE[result.direction]}`}
+        >
+          {DIRECTION_LABELS[result.direction]}
+        </span>
+        {alsoYes.length > 0 && (
+          <p className="text-[11px] leading-relaxed text-muted-2">
+            The model also answered yes to: {alsoYes.join('; ').toLowerCase()}. The badge carries one
+            answer and takes the first yes in the order risk, explanation, opportunity.
+          </p>
+        )}
+        {result.direction === 'adds-nothing' && result.findings.length > 0 && (
+          <p className="text-[11px] leading-relaxed text-muted-2">
+            All three answers here are no, and there {result.findings.length > 1 ? 'are' : 'is'} still{' '}
+            {result.findings.length} finding{result.findings.length > 1 ? 's' : ''} below. The clause is the
+            evidence; the badge is a summary of the three yes/no answers.
+          </p>
+        )}
+      </div>
 
       {result.findings.length === 0 ? (
         <p className="text-[12px] leading-relaxed text-muted">

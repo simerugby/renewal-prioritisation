@@ -81,11 +81,16 @@ async function main() {
     console.log('  (no data/second-read.json — run `npm run second-read:batch` for the model column)');
   }
 
+  let modelScore: Scored | null = null;
   if (batch) {
-    const modelScore = score(ids, (id) => batch![id]?.addsRiskBeyondSignals === true);
+    modelScore = score(ids, (id) => batch![id]?.addsRiskBeyondSignals === true);
     console.log(row('gpt-4.1-nano', modelScore));
     console.log(`\n  model false positives: ${modelScore.fpIds.join(', ') || 'none'}`);
     console.log(`  model false negatives: ${modelScore.fnIds.join(', ') || 'none'}`);
+    console.log('\n  Two of those (CUST-1009, CUST-1026) are a disagreement about the question rather than');
+    console.log('  a model error: the prompt tells the model to answer yes to a stalled PO, and the labels');
+    console.log('  answer no because the contradiction detector already puts that pair on the account page.');
+    console.log('  The row above counts them against the model, which is the harsher of the two readings.');
   }
 
   // ---- The product surface -------------------------------------------------
@@ -102,7 +107,8 @@ async function main() {
 
   console.log('\n--- OPERATING POINT, AND AN HONEST CAVEAT ---');
   console.log('I tuned the Second Read prompt twice against these 40 labels, which I also wrote.');
-  console.log('The first version biased to "no" (recall 25%); the second to "yes" (recall 96%).');
+  console.log('The first version biased to "no" (recall 25%); the second to "yes" (recall 96%). Both are');
+  console.log('earlier prompt versions, not the one scored above, and both predate the CUST-1006 correction.');
   console.log('Those bracket the answer rather than find it, and both numbers are overfitted to a set of 40.');
   console.log('');
   console.log('So the shipped product splits the job by measured strength:');
