@@ -19,7 +19,7 @@
  */
 
 import {
-  ARR_REFERENCE,
+  deriveArrReference,
   INVOICE_RISK,
   RISK_BANDS,
   SIGNAL_LABELS,
@@ -109,19 +109,28 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   // Compares how far the renewal has actually progressed against how far it
   // ought to have, given the time left. "Not started" is benign at 120 days and
   // an emergency at 18.
-  const actual = STAGE_PROGRESS[c.renewalStage] ?? 0;
-  const expected = band(daysToRenewal, [
-    [20, 1],
-    [45, 0.75],
-    [75, 0.5],
-    [110, 0.25],
-  ]);
-  const gap = Math.max(0, expected - actual);
-  push(
-    'stageReadiness',
-    Math.min(1, gap / 0.75),
-    `Stage is "${c.renewalStage}" with ${daysToRenewal} days to renewal; at this range the process would normally be ${Math.round(expected * 100)}% advanced.`,
-  );
+  const actual = STAGE_PROGRESS[c.renewalStage];
+  if (actual === undefined) {
+    push(
+      'stageReadiness',
+      null,
+      `Renewal stage "${c.renewalStage}" is not a recognised value.`,
+      'Unrecognised stage — cannot be placed on the process timeline.',
+    );
+  } else {
+    const expected = band(daysToRenewal, [
+      [20, 1],
+      [45, 0.75],
+      [75, 0.5],
+      [110, 0.25],
+    ]);
+    const gap = Math.max(0, expected - actual);
+    push(
+      'stageReadiness',
+      Math.min(1, gap / 0.75),
+      `Stage is "${c.renewalStage}" with ${daysToRenewal} days to renewal; at this range the process would normally be ${Math.round(expected * 100)}% advanced.`,
+    );
+  }
 
   // --- Engagement recency ---------------------------------------------------
   if (c.daysSinceLastCustomerEngagement === null) {
@@ -141,7 +150,10 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   }
 
   // --- Seat utilisation -----------------------------------------------------
-  const util = c.seatsPurchased > 0 ? c.activeUsers30d / c.seatsPurchased : 0;
+  // Clamped: an export where active users exceed purchased seats (a mid-term
+  // seat expansion not yet reflected in billing) must not produce a utilisation
+  // above 100% and a nonsensical negative risk.
+  const util = c.seatsPurchased > 0 ? Math.min(1, c.activeUsers30d / c.seatsPurchased) : 0;
   push(
     'seatUtilisation',
     band(util, [
@@ -155,14 +167,25 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   );
 
   // --- Executive sponsor ----------------------------------------------------
-  push(
-    'sponsorStatus',
-    SPONSOR_RISK[c.executiveSponsorStatus] ?? 0.5,
-    `Executive sponsor is ${c.executiveSponsorStatus.toLowerCase()}.`,
-  );
+  // "Unknown" is a real value in this schema and carries real risk, so it scores.
+  // A value the schema has never seen does not — see the billing note below.
+  const sponsorRisk = SPONSOR_RISK[c.executiveSponsorStatus];
+  if (sponsorRisk === undefined) {
+    push('sponsorStatus', null, `Sponsor status "${c.executiveSponsorStatus}" is not a recognised value.`, 'Unrecognised value — excluded rather than assumed healthy.');
+  } else {
+    push('sponsorStatus', sponsorRisk, `Executive sponsor is ${c.executiveSponsorStatus.toLowerCase()}.`);
+  }
 
   // --- Billing --------------------------------------------------------------
-  push('invoiceStatus', INVOICE_RISK[c.invoiceStatus] ?? 0, `Invoice status is ${c.invoiceStatus.toLowerCase()}.`);
+  // This was `INVOICE_RISK[status] ?? 0` and that was a real bug waiting for a
+  // real dataset: an unrecognised billing state would have scored as *perfectly
+  // current*, the healthiest possible value. Unknown now means excluded.
+  const invoiceRisk = INVOICE_RISK[c.invoiceStatus];
+  if (invoiceRisk === undefined) {
+    push('invoiceStatus', null, `Invoice status "${c.invoiceStatus}" is not a recognised value.`, 'Unrecognised value — excluded rather than assumed current.');
+  } else {
+    push('invoiceStatus', invoiceRisk, `Invoice status is ${c.invoiceStatus.toLowerCase()}.`);
+  }
 
   // --- Support strain -------------------------------------------------------
   const per100 = c.seatsPurchased > 0 ? (c.supportTickets90d / c.seatsPurchased) * 100 : 0;
@@ -311,7 +334,11 @@ function computeConfidence(
   const hard = contradictions.filter((c) => c.key !== 'multiple-gaps');
   if (hard.length > 0) {
     penalty += 1;
-    reasons.push(`${hard.length} signal${hard.length > 1 ? 's' : ''} contradict each other.`);
+    reasons.push(
+      hard.length === 1
+        ? 'Two signals on this account contradict each other.'
+        : `${hard.length} pairs of signals contradict each other.`,
+    );
   }
 
   if (reasons.length === 0) reasons.push('All signals present and synced within a day of the snapshot.');
@@ -324,7 +351,20 @@ function toBand(risk: number): RiskBand {
   return (RISK_BANDS.find((b) => risk >= b.min)?.band ?? 'Stable') as RiskBand;
 }
 
-export function scoreCustomer(c: Customer, asOf: string): Omit<ScoredCustomer, 'priorityRank' | 'riskOnlyRank'> {
+/**
+ * Portfolio-level context. Derived once per book at load time, so the same
+ * customer scores differently in a book of SMBs than in a book of enterprises —
+ * which is correct, because "large account" is relative to the book being worked.
+ */
+export interface ScoringContext {
+  arrReference: number;
+}
+
+export function scoreCustomer(
+  c: Customer,
+  asOf: string,
+  ctx: ScoringContext,
+): Omit<ScoredCustomer, 'priorityRank' | 'riskOnlyRank'> {
   const daysToRenewal = daysBetween(asOf, c.renewalDate);
   const signals = computeSignals(c, asOf, daysToRenewal);
 
@@ -353,13 +393,19 @@ export function scoreCustomer(c: Customer, asOf: string): Omit<ScoredCustomer, '
   // PRIORITY. Risk answers "is this bad"; priority answers "where does the next
   // hour go". A 90-risk account worth GBP 12k does not outrank a 60-risk account
   // worth GBP 210k, and the value floor stops small accounts vanishing entirely.
-  const valueWeight = VALUE_FLOOR + (1 - VALUE_FLOOR) * Math.min(1, c.arrGbp / ARR_REFERENCE);
+  const valueWeight =
+    VALUE_FLOOR + (1 - VALUE_FLOOR) * Math.min(1, c.arrGbp / Math.max(1, ctx.arrReference));
+
+  // Urgency is unbounded on the right: a book with renewals two years out must
+  // not have them treated the same as one 130 days out, which a fixed final
+  // control point would do.
   const urgency = band(daysToRenewal, [
     [0, 1],
     [30, 1],
     [60, 0.8],
     [90, 0.6],
-    [130, 0.45],
+    [180, 0.4],
+    [365, 0.25],
   ]);
   const priorityScore = riskScore * valueWeight * urgency;
 
@@ -391,8 +437,11 @@ export function scoreCustomer(c: Customer, asOf: string): Omit<ScoredCustomer, '
   };
 }
 
-export function scoreAll(customers: Customer[], asOf: string): ScoredCustomer[] {
-  const scored = customers.map((c) => scoreCustomer(c, asOf));
+export function scoreAll(customers: Customer[], asOf: string, ctx?: Partial<ScoringContext>): ScoredCustomer[] {
+  const context: ScoringContext = {
+    arrReference: ctx?.arrReference ?? deriveArrReference(customers.map((c) => c.arrGbp)),
+  };
+  const scored = customers.map((c) => scoreCustomer(c, asOf, context));
 
   const byRisk = [...scored].sort((a, b) => b.riskScore - a.riskScore);
   const riskRankById = new Map(byRisk.map((s, i) => [s.customer.customerId, i + 1]));

@@ -15,8 +15,14 @@
  * measured more reliably.
  */
 
-/** The snapshot the supplied file was taken at. Stated in the brief. */
-export const SNAPSHOT_DATE = '2026-07-21';
+/**
+ * The date every "days to renewal" counts from.
+ *
+ * Defaults to the snapshot stated in the brief. Overridable by environment so
+ * this can be pointed at a live extract without a code change; when the data
+ * becomes live, set it to today's date at ingest and nothing else moves.
+ */
+export const SNAPSHOT_DATE = process.env.NEXT_PUBLIC_SNAPSHOT_DATE?.trim() || '2026-07-21';
 
 /**
  * Weights sum to 100 so a risk score reads as "points of concern out of 100".
@@ -83,8 +89,30 @@ export const STALENESS = {
   usageStaleDays: 20,
 } as const;
 
-/** Reference point for the value axis — the largest ARR in this book. */
-export const ARR_REFERENCE = 260_000;
+/**
+ * Reference point for the value axis.
+ *
+ * Derived from the portfolio at load time, never hard-coded — a constant tuned
+ * to this file's largest account (£260k) would silently flatten every account in
+ * a book whose top account is £5m.
+ *
+ * The 90th percentile rather than the maximum, so a single outlier cannot
+ * compress the rest of the book into the value floor. Accounts above it clamp
+ * to the top of the range, which is the correct behaviour: past a point, "very
+ * large" is one category.
+ */
+export function deriveArrReference(arrValues: number[]): number {
+  const override = Number(process.env.NEXT_PUBLIC_ARR_REFERENCE ?? process.env.ARR_REFERENCE);
+  if (Number.isFinite(override) && override > 0) return override;
+
+  const sorted = [...arrValues].filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+  if (sorted.length === 0) return 1;
+  // Zero-based percentile index. `floor(n * 0.9)` returns the maximum on small
+  // books — with five accounts it picks index 4, i.e. the outlier the percentile
+  // exists to exclude. Caught by lib/scoring.test.ts.
+  const idx = Math.floor((sorted.length - 1) * 0.9);
+  return sorted[idx] || sorted[sorted.length - 1];
+}
 
 /**
  * How much a small account is allowed to matter. At 0 the ranking is pure ARR
