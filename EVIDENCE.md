@@ -1,0 +1,216 @@
+# Evidence
+
+Supporting material for [README.md](README.md), which answers the questions you asked. This file is
+the working underneath: the measurements, the methodology, and the places where testing my own
+assumptions changed my mind. Nothing here is required reading — the README stands on its own.
+
+Every figure reproduces from a command. `npm run verify`, `npm run sensitivity`, `npm run eval`,
+`npm run eval:beyond`, `npm run eval:cross`.
+
+---
+
+## Are the weights arbitrary? I tested it rather than asserting
+
+The obvious objection to a hand-built rubric is that the ranking is an artefact of numbers I invented.
+That is testable without any outcome data: jitter every weight and see whether the answer survives.
+`npm run sensitivity` does it with a fixed seed, so the figures below reproduce exactly.
+
+**Perturbation — every one of the nine weights randomly moved by up to ±40%, 1,000 times:**
+
+| | Held across trials |
+|---|---|
+| Same account at #1 | **100%** |
+| Same accounts in the top 3 | 99.8% |
+| Same accounts in the top 5 | **100%** |
+| Same accounts in the top 10 | **100%** |
+
+**Ablation — delete each signal entirely and re-rank:** the top 5 is unchanged in all nine cases.
+Removing adoption trend, the heaviest signal at 18 of 100, does not move it. Northstar and Oakwell are
+not top-ranked because of how I weighted anything; they are extreme on six signals at once.
+
+**And the half of the result that is less flattering, which is the reason to run it at all:**
+
+| Where an account starts | How far it moves under the same jitter |
+|---|---|
+| Ranks 1–5 | mean **0.03** places, worst 1 |
+| Ranks 6–15 | mean 0.29, worst 3 |
+| **Ranks 16–30** | mean 0.77, **worst 6** |
+| Ranks 31–40 | mean 0.28, worst 2 |
+
+So the ends of the list are a genuine ordering and **the middle is not**. An account at #22 could
+reasonably be at #18 or #28, and presenting that as a precise position would be false precision from a
+model that has no outcome data to justify it. The product consequence: treat the top ten as an order
+and the rest as a band. That is stated on the method page rather than left for a reader to discover.
+---
+
+## Three columns I did not score, and the evidence for each
+
+The file has 25 columns. Nine are scored, several are identity or filters, and three carry numbers I
+deliberately left out. Leaving a column unused is a decision, so each one has a measurement behind it
+rather than an oversight.
+
+**`weekly_active_users_30d` — excluded for lack of variance and collinearity.** As a stickiness ratio
+(weekly ÷ monthly actives) it looks promising, and it correlates −0.64 with the risk score. That
+correlation is the reason to exclude it, not to include it: it is 0.70 correlated with seat
+utilisation and 0.59 with adoption trend, both of which are already scored, so it mostly re-measures
+them. And across the whole book it ranges **56% to 69%** — a 14-point spread. A signal that barely
+varies cannot separate accounts; it would add weight without adding information.
+
+**`contract_term_months` — excluded because it is a proxy for segment, not for risk.** The raw pattern
+is striking: mean risk 35.1 on 12-month terms, 15.7 on 24-month, 11.7 on 36-month. It is also
+confounded. Term correlates **0.78** with ARR, and the split is almost total: 1 of 23 twelve-month
+accounts is Enterprise, against 7 of 7 on 36-month terms. Scoring term as risk would systematically
+penalise every SMB for being an SMB. That is a bias wearing a signal's clothes.
+
+**`products_owned` — excluded because the effect is not there.** Mean risk is 28.6 on one product and
+26.4 on two, which is noise. Three-product accounts average 13.2, but there are only three of them.
+Multi-product stickiness is a real effect in general; this book is too small to show it.
+
+**One thing the audit did turn up in the model's favour.** The risk distribution is bimodal, with a
+clean gap: twelve accounts score 45 or above, then nothing until 36. The Elevated threshold sits at 45,
+which lands on that break rather than cutting through a cluster. The "needs attention" set is a real
+group in the data, not an artefact of where I put a line.
+
+The same audit checked the file for internal contradictions and found none: no account has more
+critical tickets than total tickets, more weekly than monthly actives, or a date after the snapshot,
+and all 40 ids and names are unique. The dirtiness in this dataset is staleness and omission, not
+incoherence.
+
+---
+
+## Where the AI earns its place, in full
+
+**Second Read.** Open any account and it reads the note against the signals the score already counted,
+then says what the note adds. One call type, one call per account, no second call.
+
+Three properties are enforced by code rather than promised in a prompt:
+
+1. **The model returns a clause number, not a quote.** Code splits the note into clauses, the model
+   points at one by index, and code renders the text. A fabricated quote is not *checked and rejected* —
+   it is unrepresentable.
+2. **The score is not in the prompt.** The model sees which signals fired and their evidence; never the
+   risk number, the band or the rank. If it knew an account scored 15/100 it would reason toward that
+   number instead of reading the note, and "the note disagrees with the score" would stop being an
+   independent judgement.
+3. **An attribution must name a signal that actually fired.** You cannot contest a signal that scored
+   nothing. Failed attributions are dropped and the finding is kept without one.
+
+**It answers yes/no questions, not a multiple choice, and that was a correction.** The first version
+asked the model to pick one of four directions. It returned *adds-nothing* for Quantum — the account
+this feature exists for — and *adds-opportunity* for a competitor being trialled. I should have
+predicted that: `npm run eval` measures this model at 92–93% on detection and **45%** on picking a
+label from a taxonomy, and I had built on the second number. Independent binaries sit much closer to
+the task that was actually measured.
+
+**The triage list stays deterministic, and that is also measured.** `npm run eval:beyond` scores both
+systems on "does this note add risk the signals do not already have":
+
+| | Precision | Recall | Accounts it puts on the list |
+|---|---|---|---|
+| Keyword rules | 71% | 50% | **9 — £1,281,000** |
+| `gpt-4.1-nano` | 68% | 96% | 22 of 28 calm accounts |
+
+A list of 22 out of 28 is not a triage list, it is the book. So the rules select the nine accounts on
+the portfolio page and the model reads the note once you are on one. Each does the job it measurably
+does better.
+
+**One caveat I will not bury: I tuned that prompt twice against 40 labels I wrote myself.** The first
+version biased to "no" (recall 25%), the second to "yes" (recall 96%). Those bracket the answer rather
+than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
+above its own numbers. It is the reason `eval:cross` — a book I did not label and did not tune for —
+is the figure I trust most.
+
+**No second call.** No critic, no self-verifier, no judge. At this model size the deterministic
+validator is a strictly better critic than another pass of the same model: it is free, reproducible,
+and it cannot be talked out of its answer. The independent checks are the clause-index render, the
+firing-signal gate, the enum validator, and the human. The panel is deliberately built to **show what
+validation rejected**, because a rejected output is better evidence that the checks are real than a
+clean one.
+
+---
+
+## Built for the next dataset, not just this one
+
+This is a snapshot of 40 rows. Everything below exists because the next file will not be.
+
+**Nothing is tuned to this file's contents.** The scoring engine (`lib/scoring.ts`) contains no
+numbers at all. Every weight, threshold and staleness limit lives in `lib/config.ts`. The value
+reference is derived from the portfolio's ARR distribution at load time; an earlier version had
+`ARR_REFERENCE = 260_000` hard-coded to this book's largest account, which would have flattened the
+value axis on any book with a bigger one. Urgency extends past a year rather than clamping at this
+file's 129-day horizon.
+
+**Unrecognised data is excluded, never assumed healthy.** `lib/schema.ts` validates every row. A new
+`invoice_status` value the model has not seen is reported, dropped from scoring, and shown in the UI.
+It does *not* fall through to "Current". That was a real bug in the first version (`INVOICE_RISK[x] ??
+0` scored an unknown billing state as perfectly healthy) and there is now a test named after it.
+
+**Structural failure is loud; row-level failure is contained.** A missing required column stops the
+app with a message naming the column. A single row with a malformed date is quarantined and the other
+39 still load. Both surface in the product rather than in a log.
+
+**The data source is swappable.** `PortfolioSource` in `lib/data.ts` is a two-method interface. A
+warehouse query, an HTTP export or a CRM API is a new implementation and nothing else changes.
+`listPortfolio` already takes the paging arguments a server-side source would need, and account pages
+render per request rather than being pre-generated, so build time does not grow with the size of the
+book.
+
+**A correctness bug worth naming, because it is invisible to types and unit tests.** An unknown
+customer id rendered the right "no such account" page under an HTTP **200**. `notFound()` cannot set a
+status once a response has begun streaming, and a `loading.tsx` anywhere above a route is what starts
+it. The fix was to scope the skeleton to the portfolio page with a route group, leaving the account
+route unwrapped. `npm run smoke` asserts both behaviours against a running server: status codes,
+rendered content, and the AI endpoint's failure paths.
+
+**Scale, honestly.** Scoring is O(n) with roughly forty arithmetic operations per account and the
+whole book is held in memory. Tens of thousands of accounts are fine. Millions are not, and the right
+answer there is to push scoring into the warehouse and serve pre-scored pages, which is the seam
+above, not a rewrite.
+
+**119 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
+the author thought of, which on a 40-row file is a weak claim. `lib/properties.test.ts` uses
+`fast-check` to generate thousands of portfolios per run (unmapped enums, negative ARR, dates
+centuries apart, lone surrogates, empty books, duplicate ids) and asserts invariants that must hold
+for *any* input: the risk score is always finite and in range, priority is never negative, the
+evidence panel's contributions always sum to the headline number, ranks are always a permutation of
+1..n.
+
+It found three defects in the first run, and all three were the silent kind:
+
+| Found | Why it mattered |
+|---|---|
+| A trailing comma produced two columns named `""`, and assigning by name meant the second **overwrote the first** — `id,name,,` + `1,bob,x,y` parsed to `{id:"1", name:"bob", "":"y"}` and `x` vanished | Excel writes trailing commas by default. No error was raised anywhere |
+| `scoreAll` keyed its risk ranking by customer id, so duplicate ids **collapsed to one rank** | The ranking quietly stopped being a ranking |
+| An unquoted comma inside free text truncated the note and dropped the rest | The most common CSV defect there is, and it was invisible |
+
+`lib/portability.test.ts` is the other half: **a second company's export**, written to be awkward in
+the ways a real one is: BOM, CRLF, trailing commas, unquoted commas in notes, enum values this model
+has never seen, no NPS columns at all, an SMB book two orders of magnitude smaller, a duplicate id, a
+`15/09/2026` date and a renewal already in the past. Five accounts load, two quarantine, every
+unmapped value is reported by name, and the value axis rescales to the smaller book.
+
+It also asserts the promise that **fails**: the note scanner does not recognise *"practice manager
+retiring in sept"* as a sponsor loss. That limitation is now a test, so it cannot quietly stop being
+true.
+
+`npm run check` runs typecheck, lint, tests and the verification harness together.
+
+**What does not port** is the keyword scanner. Finding 5 measured exactly how badly (7%), and that is
+the honest boundary between the part of this that is a system and the part that is a transcription of
+one company's writing habits.
+
+---
+
+## Reproducing every figure in these two documents
+
+```bash
+npm run verify        # the ranking, the findings, and the columns left unscored
+npm run sensitivity   # weight perturbation and ablation, fixed seed
+npm run eval          # keyword rules vs model on note detection
+npm run eval:beyond   # the question the product actually asks
+npm run eval:cross    # the same call on a company the system has never seen
+npm test              # 119 tests, including the model-output validators
+```
+
+Nothing in the README or in this file is estimated or recalled. Where a number could not be
+reproduced by a command, it was removed rather than rounded.
