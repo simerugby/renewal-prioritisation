@@ -62,20 +62,20 @@ assert_contains "account page shows its evidence" "$detail" "Evidence behind the
 assert_contains "account page shows the raw note" "$detail" "moves roles on 1 August"
 
 # The AI endpoint must answer usefully with or without a key.
-brief=$(curl -s --max-time 30 -X POST "$BASE/api/brief" \
+second=$(curl -s --max-time 30 -X POST "$BASE/api/second-read" \
   -H 'Content-Type: application/json' -d '{"customerId":"CUST-1025"}')
-assert_contains "brief endpoint returns a brief"  "$brief" '"headline"'
-if contains "$brief" '"source":"llm"'; then
-  printf '  note  %-46s\n' "brief came from the model (key configured)"
+assert_contains "second read returns a result"  "$second" '"findings"'
+if contains "$second" '"source":"llm"'; then
+  printf '  note  %-46s\n' "second read came from the model (key configured)"
 else
-  printf '  note  %-46s\n' "brief came from the deterministic fallback"
+  printf '  note  %-46s\n' "second read used the fallback or the committed batch"
 fi
 
-check "brief rejects an unknown account"  404 \
-  "$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$BASE/api/brief" \
+check "second read rejects an unknown account"  404 \
+  "$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$BASE/api/second-read" \
      -H 'Content-Type: application/json' -d '{"customerId":"NOPE"}')"
-check "brief rejects a malformed body"    400 \
-  "$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$BASE/api/brief" \
+check "second read rejects a malformed body"    400 \
+  "$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$BASE/api/second-read" \
      -H 'Content-Type: application/json' -d 'not json')"
 
 if [ "$fails" -eq 0 ]; then

@@ -23,18 +23,23 @@ cp .env.example .env.local     # then add your key
 OPENAI_API_KEY=sk-...
 ```
 
-**The app is fully functional without a key.** Scores, evidence, rankings and suggested actions are
-all computed in code; the AI feature degrades to a rule-based brief and says so on screen.
+**The app is fully functional without a key.** Scores, evidence, rankings, the triage list and the
+suggested actions are all computed in code. The one AI surface falls back to a committed batch of real
+model output, and to a keyword scanner below that, and says on screen which one you are looking at.
 
 Other commands:
 
 | command | what it does |
 |---|---|
 | `npm run verify` | Prints the full ranking, the confidence spread and the model's sanity checks. Every number in this README comes from here. |
-| `npm run eval` | The head-to-head behind the AI decision (see [finding 5](#5-the-rules-i-wrote-score-95-on-this-data-and-7-when-the-wording-changes)). Runs the model columns too if a key is set. |
-| `npm test` | 103 tests: unit, property-based (thousands of generated portfolios), and a second company's export. |
+| `npm run eval` | Rules against the model on note detection, on the supplied notes and on reworded ones. |
+| `npm run eval:beyond` | The question the product actually asks: does a note add risk the signals do not already have? |
+| `npm run eval:cross` | The same call against a company the system has never seen. The number that decides whether the model ships. |
+| `npm test` | 119 tests: unit, property-based (thousands of generated portfolios), a second company's export, and the model-output validators. |
 | `npm run smoke` | End-to-end checks against a running server: status codes, rendered content, AI failure paths. |
-| `npm run check` | Typecheck, lint, tests and verification in one command. |
+| `npm run secret-scan` | Fails if a key could reach a commit, a browser bundle or a log. |
+| `npm run check` | Typecheck, lint, tests, secret scan and verification in one command. |
+| `npm run second-read:batch` | Regenerates `data/second-read.json`, the committed model output that lets a reviewer without a key see the real feature. |
 | `npm run build` | Production build. |
 
 ---
@@ -166,8 +171,28 @@ by `npm run eval` so the disagreement is visible rather than tidied away.
 Both figures are biased and I wrote both sets; the second is unfair to the rules in exactly the way
 the first is generous to them. What they agree on is the finding: **the rules encode one company's
 writing conventions, not the meaning.** That is a transfer problem, and it is precisely what would
-break the day this pointed at a second company. It is the reason the AI call exists, and it is
-reproducible with `npm run eval`.
+break the day this pointed at a second company.
+
+**So I tested that directly, and it is the number I would put in front of you first.** The repo already
+contains a second company's export as a test fixture — different columns, unseen enum values, an SMB
+book two orders of magnitude smaller, and notes in a different register: lowercase, informal,
+*"practice manager retiring in sept, no handover planned yet"*. Nothing was tuned for it. The prompt is
+generated from the signal list and the enum constants, so it adapts without being edited; the regexes
+are exactly the ones written for the first company.
+
+| On a book the system has never seen | Notes whose risk the signals miss |
+|---|---|
+| Keyword rules | **1 of 4** |
+| `gpt-4.1-nano` | **3 of 4** |
+
+The rules miss *"practice manager retiring in sept"*, *"site closed in may; unclear if they are
+continuing"*, and *"renewal agreed verbally; paperwork with their accountant"*. Reproduce with
+`npm run eval:cross`. Four accounts is a small sample and a single run, so I would quote it as a
+direction rather than a rate — but the direction is the whole point of the hire.
+
+**And the conclusion I would say out loud: on the forty notes you supplied, the rules beat the model,
+and if this file were the whole world I would delete the API call.** It earns its place because
+company number eleven writes its notes differently and nobody is going to rewrite the regexes.
 
 **The failure that actually worries me is the other direction.** A missed flag costs a flag. A *wrong*
 flag puts a confident false statement in front of a CSM and can fire a playbook rule. `lib/noteScan.test.ts`
@@ -180,6 +205,92 @@ sentence — and would not fix the next one. **Patterns match tokens; only a rea
 So the design constraint is that a note flag can never quietly assert anything: it cannot move the
 risk score, it cannot change a rank, and it always renders the exact sentence that triggered it, so a
 wrong match is visible in the same glance as the claim.
+
+---
+
+## Three columns I did not score, and the evidence for each
+
+The file has 25 columns. Nine are scored, several are identity or filters, and three carry numbers I
+deliberately left out. Leaving a column unused is a decision, so each one has a measurement behind it
+rather than an oversight.
+
+**`weekly_active_users_30d` — excluded for lack of variance and collinearity.** As a stickiness ratio
+(weekly ÷ monthly actives) it looks promising, and it correlates −0.64 with the risk score. That
+correlation is the reason to exclude it, not to include it: it is 0.70 correlated with seat
+utilisation and 0.59 with adoption trend, both of which are already scored, so it mostly re-measures
+them. And across the whole book it ranges **56% to 69%** — a 14-point spread. A signal that barely
+varies cannot separate accounts; it would add weight without adding information.
+
+**`contract_term_months` — excluded because it is a proxy for segment, not for risk.** The raw pattern
+is striking: mean risk 35.1 on 12-month terms, 15.7 on 24-month, 11.7 on 36-month. It is also
+confounded. Term correlates **0.78** with ARR, and the split is almost total: 1 of 23 twelve-month
+accounts is Enterprise, against 7 of 7 on 36-month terms. Scoring term as risk would systematically
+penalise every SMB for being an SMB. That is a bias wearing a signal's clothes.
+
+**`products_owned` — excluded because the effect is not there.** Mean risk is 28.6 on one product and
+26.4 on two, which is noise. Three-product accounts average 13.2, but there are only three of them.
+Multi-product stickiness is a real effect in general; this book is too small to show it.
+
+**One thing the audit did turn up in the model's favour.** The risk distribution is bimodal, with a
+clean gap: twelve accounts score 45 or above, then nothing until 36. The Elevated threshold sits at 45,
+which lands on that break rather than cutting through a cluster. The "needs attention" set is a real
+group in the data, not an artefact of where I put a line.
+
+The same audit checked the file for internal contradictions and found none: no account has more
+critical tickets than total tickets, more weekly than monthly actives, or a date after the snapshot,
+and all 40 ids and names are unique. The dirtiness in this dataset is staleness and omission, not
+incoherence.
+
+---
+
+## The one AI feature, and where the evidence put it
+
+**Second Read.** Open any account and it reads the note against the signals the score already counted,
+then says what the note adds. One call type, one call per account, no second call.
+
+Three properties are enforced by code rather than promised in a prompt:
+
+1. **The model returns a clause number, not a quote.** Code splits the note into clauses, the model
+   points at one by index, and code renders the text. A fabricated quote is not *checked and rejected* —
+   it is unrepresentable.
+2. **The score is not in the prompt.** The model sees which signals fired and their evidence; never the
+   risk number, the band or the rank. If it knew an account scored 15/100 it would reason toward that
+   number instead of reading the note, and "the note disagrees with the score" would stop being an
+   independent judgement.
+3. **An attribution must name a signal that actually fired.** You cannot contest a signal that scored
+   nothing. Failed attributions are dropped and the finding is kept without one.
+
+**It answers yes/no questions, not a multiple choice, and that was a correction.** The first version
+asked the model to pick one of four directions. It returned *adds-nothing* for Quantum — the account
+this feature exists for — and *adds-opportunity* for a competitor being trialled. I should have
+predicted that: `npm run eval` measures this model at 92–93% on detection and **45%** on picking a
+label from a taxonomy, and I had built on the second number. Independent binaries sit much closer to
+the task that was actually measured.
+
+**The triage list stays deterministic, and that is also measured.** `npm run eval:beyond` scores both
+systems on "does this note add risk the signals do not already have":
+
+| | Precision | Recall | Accounts it puts on the list |
+|---|---|---|---|
+| Keyword rules | 71% | 50% | **9 — £1,281,000** |
+| `gpt-4.1-nano` | 68% | 96% | 22 of 28 calm accounts |
+
+A list of 22 out of 28 is not a triage list, it is the book. So the rules select the nine accounts on
+the portfolio page and the model reads the note once you are on one. Each does the job it measurably
+does better.
+
+**One caveat I will not bury: I tuned that prompt twice against 40 labels I wrote myself.** The first
+version biased to "no" (recall 25%), the second to "yes" (recall 96%). Those bracket the answer rather
+than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
+above its own numbers. It is the reason `eval:cross` — a book I did not label and did not tune for —
+is the figure I trust most.
+
+**No second call.** No critic, no self-verifier, no judge. At this model size the deterministic
+validator is a strictly better critic than another pass of the same model: it is free, reproducible,
+and it cannot be talked out of its answer. The independent checks are the clause-index render, the
+firing-signal gate, the enum validator, and the human. The panel is deliberately built to **show what
+validation rejected**, because a rejected output is better evidence that the checks are real than a
+clean one.
 
 ---
 

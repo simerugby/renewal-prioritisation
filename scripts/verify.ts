@@ -110,6 +110,52 @@ async function main() {
   console.log(`  risk ${quantum.riskScore.toFixed(1)}, priority #${quantum.priorityRank}, renews in ${quantum.daysToRenewal} days`);
   console.log(`  note: "${quantum.customer.customerNotes}"`);
 
+  // The columns that are NOT scored, with the evidence for excluding each. A
+  // column left out is a decision, and this is where it becomes checkable.
+  console.log('\n=== COLUMNS NOT SCORED, AND THE EVIDENCE FOR LEAVING THEM OUT ===');
+  const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
+  const corr = (x: number[], y: number[]) => {
+    const mx = mean(x);
+    const my = mean(y);
+    return (
+      x.reduce((s, _, i) => s + (x[i] - mx) * (y[i] - my), 0) /
+      Math.sqrt(x.reduce((s, v) => s + (v - mx) ** 2, 0) * y.reduce((s, v) => s + (v - my) ** 2, 0))
+    );
+  };
+
+  const withWau = rows.filter((r) => r.customer.weeklyActiveUsers30d !== null);
+  const stick = withWau.map((r) => r.customer.weeklyActiveUsers30d! / r.customer.activeUsers30d);
+  const util = withWau.map((r) => r.customer.activeUsers30d / r.customer.seatsPurchased);
+  console.log('weekly_active_users_30d, as stickiness (weekly / monthly actives)');
+  console.log(
+    `  spread across the book       ${(Math.min(...stick) * 100).toFixed(0)}% to ${(Math.max(...stick) * 100).toFixed(0)}%  (${((Math.max(...stick) - Math.min(...stick)) * 100).toFixed(0)} points)`,
+  );
+  console.log(`  correlation with seat util   ${corr(stick, util).toFixed(2)} — mostly re-measures a signal already scored`);
+
+  console.log('contract_term_months');
+  console.log(
+    `  correlation with ARR         ${corr(rows.map((r) => r.customer.contractTermMonths), rows.map((r) => r.customer.arrGbp)).toFixed(2)} — a proxy for segment, not for risk`,
+  );
+  for (const t of [12, 24, 36]) {
+    const g = rows.filter((r) => r.customer.contractTermMonths === t);
+    if (!g.length) continue;
+    console.log(
+      `    ${t}mo: n=${g.length}  mean risk ${mean(g.map((r) => r.riskScore)).toFixed(1)}  Enterprise ${g.filter((r) => r.customer.segment === 'Enterprise').length}/${g.length}`,
+    );
+  }
+
+  console.log('products_owned');
+  for (const n of [1, 2, 3]) {
+    const g = rows.filter((r) => r.customer.productsOwned.length === n);
+    if (!g.length) continue;
+    console.log(`    ${n} product(s): n=${g.length}  mean risk ${mean(g.map((r) => r.riskScore)).toFixed(1)}`);
+  }
+
+  const sortedRisk = rows.map((r) => r.riskScore).sort((a, b) => b - a);
+  console.log(`\nrisk distribution, descending: ${sortedRisk.map((v) => v.toFixed(0)).join(' ')}`);
+  console.log('  twelve accounts score 45 or above, then nothing until 36. The Elevated threshold is 45,');
+  console.log('  so it lands on a gap in the data rather than cutting through a cluster.');
+
   console.log('\n--- Note-scanner eval (the control group for the AI feature) ---');
   const evalResult = runNoteScanEval();
   console.log(`Hand-labelled accounts: ${evalResult.total}`);
