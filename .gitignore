@@ -46,3 +46,11 @@ next-env.d.ts
 # The example file is documentation, not a secret, and the README tells
 # reviewers to copy it. Real keys live in .env.local, which stays ignored above.
 !.env.example
+
+# Scratch files. Audit agents left three of these in the tree and `git add -A`
+# swept them into a commit; a reviewer cloning this should see the app, not
+# working notes.
+scratch_*
+_banner.js
+dump.ts
+scatter.json
