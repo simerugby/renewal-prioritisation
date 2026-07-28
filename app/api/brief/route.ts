@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { loadPortfolio } from '@/lib/data';
 import { buildFallbackBrief, buildPrompt, type BriefResponse } from '@/lib/brief';
+import { checkRateLimit, clientKeyFrom } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 
@@ -62,6 +63,16 @@ export async function POST(request: Request) {
     // Not an error state. The app is fully usable without a key, and saying so
     // plainly is more useful to a reviewer than a red banner.
     return NextResponse.json(buildFallbackBrief(row, 'no-key'));
+  }
+
+  // Only reached when a key exists, i.e. only when a call would cost money.
+  // Over the limit the user still gets a brief — the deterministic one — rather
+  // than an error, so the app never simply stops working.
+  const limit = checkRateLimit(clientKeyFrom(request));
+  if (!limit.allowed) {
+    return NextResponse.json(buildFallbackBrief(row, 'rate-limited'), {
+      headers: { 'Retry-After': String(limit.retryAfterSeconds) },
+    });
   }
 
   try {

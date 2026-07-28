@@ -42,3 +42,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# The example file is documentation, not a secret, and the README tells
+# reviewers to copy it. Real keys live in .env.local, which stays ignored above.
+!.env.example
