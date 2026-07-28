@@ -16,7 +16,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { parseCsv } from './csv';
+import { parseCsvDetailed } from './csv';
 import { SNAPSHOT_DATE } from './config';
 import { SchemaError, validatePortfolio, type DataIssue } from './schema';
 import { scoreAll } from './scoring';
@@ -47,9 +47,15 @@ export interface Portfolio {
 }
 
 /** Implement this to point the app at something other than a CSV. */
+export interface SourceLoad {
+  records: Record<string, string>[];
+  /** Structural problems found before validation, e.g. rows with surplus cells. */
+  issues: DataIssue[];
+}
+
 export interface PortfolioSource {
   name: string;
-  load(): Promise<Record<string, string>[]>;
+  load(): Promise<SourceLoad>;
 }
 
 export function csvFileSource(filePath: string): PortfolioSource {
@@ -69,7 +75,14 @@ export function csvFileSource(filePath: string): PortfolioSource {
       if (!text.trim()) {
         throw new DataLoadError('The portfolio file is empty.', 'It should contain a header row and at least one account.');
       }
-      return parseCsv(text);
+      const { rows, raggedRows } = parseCsvDetailed(text);
+      const issues: DataIssue[] = raggedRows.map((n) => ({
+        level: 'warning' as const,
+        scope: `row ${n + 1}`,
+        message:
+          'This row has more cells than the header has columns, which usually means an unquoted comma inside a free-text field. The surplus was dropped, so the note on this row may be truncated.',
+      }));
+      return { records: rows, issues };
     },
   };
 }
@@ -111,7 +124,7 @@ export async function loadPortfolio(
   const cached = readCache(key);
   if (cached) return cached;
 
-  const records = await source.load();
+  const { records, issues: sourceIssues } = await source.load();
 
   let validated;
   try {
@@ -129,7 +142,7 @@ export async function loadPortfolio(
 
   const portfolio: Portfolio = {
     rows: scoreAll(validated.customers, asOf),
-    issues: validated.issues,
+    issues: [...sourceIssues, ...validated.issues],
     quarantined: validated.quarantined,
     asOf,
     sourceName: source.name,

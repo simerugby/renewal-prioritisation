@@ -433,14 +433,21 @@ export function scoreAll(customers: Customer[], asOf: string, ctx?: Partial<Scor
   };
   const scored = customers.map((c) => scoreCustomer(c, asOf, context));
 
-  const byRisk = [...scored].sort((a, b) => b.riskScore - a.riskScore);
-  const riskRankById = new Map(byRisk.map((s, i) => [s.customer.customerId, i + 1]));
+  // Keyed by object identity, not by customer id. Keying by id meant two rows
+  // sharing an id collapsed to one map entry and both received the same
+  // riskOnlyRank, so the ranks were no longer a permutation of 1..n. The loader
+  // de-duplicates before it gets here, but a scoring function should not depend
+  // on its caller having done that. Found by the rank-permutation property.
+  const riskRank = new Map<(typeof scored)[number], number>();
+  [...scored]
+    .sort((a, b) => b.riskScore - a.riskScore)
+    .forEach((s, i) => riskRank.set(s, i + 1));
 
   return scored
     .sort((a, b) => b.priorityScore - a.priorityScore)
     .map((s, i) => ({
       ...s,
       priorityRank: i + 1,
-      riskOnlyRank: riskRankById.get(s.customer.customerId) ?? 0,
+      riskOnlyRank: riskRank.get(s) ?? 0,
     }));
 }
