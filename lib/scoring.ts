@@ -1,0 +1,407 @@
+/**
+ * THE SCORING ENGINE.
+ *
+ * Deliberately contains no magic numbers — every threshold, weight and label
+ * lives in `config.ts`. That split is the point: this file is the logic that
+ * holds for any B2B renewal book, `config.ts` is the part you rewrite per
+ * company.
+ *
+ * Three outputs, kept separate on purpose:
+ *
+ *   RISK       is this account in trouble?           0-100, additive, inspectable
+ *   PRIORITY   where does the next CSM hour go?      risk x value x urgency
+ *   CONFIDENCE how much of this do we actually know? never folded into the above
+ *
+ * None of the three is a probability. There are no historical renewal outcomes
+ * in the dataset, so nothing here has been or could be validated against
+ * observed churn, and presenting any of it as a likelihood would be inventing
+ * precision the data cannot support.
+ */
+
+import {
+  ARR_REFERENCE,
+  INVOICE_RISK,
+  RISK_BANDS,
+  SIGNAL_LABELS,
+  SIGNAL_WEIGHTS,
+  SPONSOR_RISK,
+  STAGE_PROGRESS,
+  STALENESS,
+  VALUE_FLOOR,
+  type SignalKey,
+} from './config';
+import { scanNotes } from './noteScan';
+import { selectPlaybook } from './playbook';
+import type {
+  Contradiction,
+  Customer,
+  ConfidenceLevel,
+  RiskBand,
+  ScoredCustomer,
+  SignalResult,
+} from './types';
+
+/** Piecewise-linear interpolation between (input, risk) control points. */
+export function band(x: number, points: [number, number][]): number {
+  if (x <= points[0][0]) return points[0][1];
+  if (x >= points[points.length - 1][0]) return points[points.length - 1][1];
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[i + 1];
+    if (x >= x0 && x <= x1) {
+      if (x1 === x0) return y1;
+      return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+    }
+  }
+  return points[points.length - 1][1];
+}
+
+export function daysBetween(fromIso: string, toIso: string): number {
+  const a = Date.parse(`${fromIso}T00:00:00Z`);
+  const b = Date.parse(`${toIso}T00:00:00Z`);
+  return Math.round((b - a) / 86_400_000);
+}
+
+const pct = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(1)}%`;
+
+function computeSignals(c: Customer, asOf: string, daysToRenewal: number): SignalResult[] {
+  const out: SignalResult[] = [];
+  const push = (
+    key: SignalKey,
+    normalised: number | null,
+    evidence: string,
+    excludedReason?: string,
+    weightScale = 1,
+  ) => {
+    const weightBase = SIGNAL_WEIGHTS[key];
+    const weightApplied = normalised === null ? 0 : weightBase * weightScale;
+    out.push({
+      key,
+      label: SIGNAL_LABELS[key],
+      normalised,
+      weightApplied,
+      weightBase,
+      contribution: 0, // filled in after re-normalisation
+      evidence,
+      excludedReason,
+    });
+  };
+
+  // --- Adoption trend -------------------------------------------------------
+  const trend =
+    c.activeUsersPrevious30d > 0
+      ? (c.activeUsers30d - c.activeUsersPrevious30d) / c.activeUsersPrevious30d
+      : 0;
+  push(
+    'adoptionTrend',
+    band(trend, [
+      [-0.5, 1],
+      [-0.4, 1],
+      [-0.25, 0.65],
+      [-0.1, 0.3],
+      [0, 0.05],
+      [0.1, 0],
+    ]),
+    `Active users ${pct(trend * 100)} versus the prior 30 days (${c.activeUsersPrevious30d} to ${c.activeUsers30d}).`,
+  );
+
+  // --- Renewal process readiness -------------------------------------------
+  // Compares how far the renewal has actually progressed against how far it
+  // ought to have, given the time left. "Not started" is benign at 120 days and
+  // an emergency at 18.
+  const actual = STAGE_PROGRESS[c.renewalStage] ?? 0;
+  const expected = band(daysToRenewal, [
+    [20, 1],
+    [45, 0.75],
+    [75, 0.5],
+    [110, 0.25],
+  ]);
+  const gap = Math.max(0, expected - actual);
+  push(
+    'stageReadiness',
+    Math.min(1, gap / 0.75),
+    `Stage is "${c.renewalStage}" with ${daysToRenewal} days to renewal; at this range the process would normally be ${Math.round(expected * 100)}% advanced.`,
+  );
+
+  // --- Engagement recency ---------------------------------------------------
+  if (c.daysSinceLastCustomerEngagement === null) {
+    push('engagementRecency', null, 'No engagement date recorded.', 'Field blank in source data.');
+  } else {
+    push(
+      'engagementRecency',
+      band(c.daysSinceLastCustomerEngagement, [
+        [7, 0],
+        [21, 0.2],
+        [45, 0.6],
+        [75, 0.9],
+        [110, 1],
+      ]),
+      `${c.daysSinceLastCustomerEngagement} days since the last recorded customer contact.`,
+    );
+  }
+
+  // --- Seat utilisation -----------------------------------------------------
+  const util = c.seatsPurchased > 0 ? c.activeUsers30d / c.seatsPurchased : 0;
+  push(
+    'seatUtilisation',
+    band(util, [
+      [0.15, 1],
+      [0.35, 0.75],
+      [0.5, 0.45],
+      [0.75, 0.05],
+      [0.9, 0],
+    ]),
+    `${c.activeUsers30d} of ${c.seatsPurchased} purchased seats active (${Math.round(util * 100)}%).`,
+  );
+
+  // --- Executive sponsor ----------------------------------------------------
+  push(
+    'sponsorStatus',
+    SPONSOR_RISK[c.executiveSponsorStatus] ?? 0.5,
+    `Executive sponsor is ${c.executiveSponsorStatus.toLowerCase()}.`,
+  );
+
+  // --- Billing --------------------------------------------------------------
+  push('invoiceStatus', INVOICE_RISK[c.invoiceStatus] ?? 0, `Invoice status is ${c.invoiceStatus.toLowerCase()}.`);
+
+  // --- Support strain -------------------------------------------------------
+  const per100 = c.seatsPurchased > 0 ? (c.supportTickets90d / c.seatsPurchased) * 100 : 0;
+  const strain =
+    0.7 *
+      band(c.criticalSupportTickets90d, [
+        [0, 0],
+        [1, 0.35],
+        [2, 0.65],
+        [4, 1],
+      ]) +
+    0.3 *
+      band(per100, [
+        [0.5, 0],
+        [2, 0.4],
+        [5, 0.8],
+        [10, 1],
+      ]);
+  push(
+    'supportStrain',
+    strain,
+    `${c.supportTickets90d} support tickets in 90 days, ${c.criticalSupportTickets90d} critical (${per100.toFixed(1)} per 100 seats).`,
+  );
+
+  // --- Sentiment, age-discounted -------------------------------------------
+  // This is the sharpest rule in the model. An NPS response from 238 days ago is
+  // not evidence about today, so it is excluded outright rather than quietly
+  // averaged in. What it costs the account is confidence, not risk.
+  const npsAge = c.npsResponseDate ? daysBetween(c.npsResponseDate, asOf) : null;
+  if (c.npsScore === null || npsAge === null) {
+    push(
+      'sentiment',
+      null,
+      c.npsScore === null ? 'No NPS score recorded.' : `NPS ${c.npsScore} recorded with no response date.`,
+      c.npsScore === null ? 'No NPS response on file.' : 'Response date missing, so the score cannot be aged.',
+    );
+  } else if (npsAge > STALENESS.npsUsableDays) {
+    push(
+      'sentiment',
+      null,
+      `NPS ${c.npsScore}, but the response is ${npsAge} days old.`,
+      `Older than the ${STALENESS.npsUsableDays}-day limit, so it is excluded from the score.`,
+    );
+  } else {
+    const scale = npsAge <= STALENESS.npsFreshDays ? 1 : 0.5;
+    push(
+      'sentiment',
+      (50 - c.npsScore / 2) / 100,
+      `NPS ${c.npsScore}, responded ${npsAge} days ago${scale < 1 ? ' — counted at half weight for age' : ''}.`,
+      undefined,
+      scale,
+    );
+  }
+
+  // --- Prior discount pressure ---------------------------------------------
+  push(
+    'discountPressure',
+    band(c.lastRenewalDiscountPct, [
+      [0, 0],
+      [10, 0.35],
+      [20, 0.8],
+      [25, 1],
+    ]),
+    `Last renewal closed at a ${c.lastRenewalDiscountPct}% discount.`,
+  );
+
+  return out;
+}
+
+function detectContradictions(c: Customer, signals: SignalResult[]): Contradiction[] {
+  const found: Contradiction[] = [];
+  const trend =
+    c.activeUsersPrevious30d > 0
+      ? (c.activeUsers30d - c.activeUsersPrevious30d) / c.activeUsersPrevious30d
+      : 0;
+
+  if (c.renewalStage === 'Verbal commitment' && c.invoiceStatus !== 'Current') {
+    found.push({
+      key: 'verbal-vs-billing',
+      summary: 'Verbal commitment, unresolved billing',
+      detail: `The renewal is recorded at "Verbal commitment" while the invoice is ${c.invoiceStatus.toLowerCase()}. One of those two records is out of date, and which one it is changes the next action completely.`,
+    });
+  }
+
+  if (c.npsScore !== null && c.npsScore >= 30 && (c.executiveSponsorStatus === 'Left company' || c.executiveSponsorStatus === 'Inactive')) {
+    found.push({
+      key: 'sentiment-vs-sponsor',
+      summary: 'Users are happy, the sponsor is not there',
+      detail: `NPS of ${c.npsScore} says the people using it are satisfied, but the executive sponsor is ${c.executiveSponsorStatus.toLowerCase()}. Satisfaction does not sign contracts.`,
+    });
+  }
+
+  if (trend > 0 && c.npsScore !== null && c.npsScore < 0) {
+    found.push({
+      key: 'usage-vs-sentiment',
+      summary: 'Usage is up, sentiment is negative',
+      detail: `Active users grew ${pct(trend * 100)} while NPS sits at ${c.npsScore}. Typically means the product is embedded but something specific is making it painful.`,
+    });
+  }
+
+  if (c.npsScore !== null && !c.npsResponseDate) {
+    found.push({
+      key: 'nps-undated',
+      summary: 'NPS score with no response date',
+      detail: `An NPS of ${c.npsScore} is on file with no date against it, so there is no way to tell whether it reflects today or last year. It has been excluded from the score.`,
+    });
+  }
+
+  const excluded = signals.filter((s) => s.normalised === null);
+  if (excluded.length >= 2) {
+    found.push({
+      key: 'multiple-gaps',
+      summary: `${excluded.length} signals unusable`,
+      detail: `${excluded.map((s) => s.label).join(' and ')} could not be scored. The risk number here rests on a materially smaller evidence base than the rest of the book.`,
+    });
+  }
+
+  return found;
+}
+
+function computeConfidence(
+  coverage: number,
+  usageAgeDays: number,
+  contradictions: Contradiction[],
+): { level: ConfidenceLevel; reasons: string[] } {
+  const reasons: string[] = [];
+  let penalty = 0;
+
+  if (coverage < 0.95) {
+    penalty += 1;
+    reasons.push(`Only ${Math.round(coverage * 100)}% of the model's weight could be applied.`);
+  }
+  if (coverage < 0.9) penalty += 1;
+
+  if (usageAgeDays > STALENESS.usageWarnDays) {
+    penalty += 1;
+    reasons.push(`Usage data was last synced ${usageAgeDays} days before the snapshot.`);
+  }
+  if (usageAgeDays > STALENESS.usageStaleDays) {
+    penalty += 1;
+    reasons.push('That is stale enough that the adoption trend may not reflect reality.');
+  }
+
+  // Contradictions cost confidence. They never move the risk score — resolving
+  // one silently, in either direction, would be inventing a fact.
+  const hard = contradictions.filter((c) => c.key !== 'multiple-gaps');
+  if (hard.length > 0) {
+    penalty += 1;
+    reasons.push(`${hard.length} signal${hard.length > 1 ? 's' : ''} contradict each other.`);
+  }
+
+  if (reasons.length === 0) reasons.push('All signals present and synced within a day of the snapshot.');
+
+  const level: ConfidenceLevel = penalty === 0 ? 'High' : penalty <= 2 ? 'Medium' : 'Low';
+  return { level, reasons };
+}
+
+function toBand(risk: number): RiskBand {
+  return (RISK_BANDS.find((b) => risk >= b.min)?.band ?? 'Stable') as RiskBand;
+}
+
+export function scoreCustomer(c: Customer, asOf: string): Omit<ScoredCustomer, 'priorityRank' | 'riskOnlyRank'> {
+  const daysToRenewal = daysBetween(asOf, c.renewalDate);
+  const signals = computeSignals(c, asOf, daysToRenewal);
+
+  // Re-normalise over the weight we could actually apply, so an account missing
+  // a signal is still scored on the same 0-100 scale as one that has everything.
+  const appliedWeight = signals.reduce((s, x) => s + x.weightApplied, 0);
+  const totalWeight = Object.values(SIGNAL_WEIGHTS).reduce((a, b) => a + b, 0);
+  const weighted = signals.reduce((s, x) => s + (x.normalised ?? 0) * x.weightApplied, 0);
+  const riskScore = appliedWeight > 0 ? (weighted / appliedWeight) * 100 : 0;
+
+  for (const s of signals) {
+    s.contribution = appliedWeight > 0 ? ((s.normalised ?? 0) * s.weightApplied * 100) / appliedWeight : 0;
+  }
+
+  const modelCoverage = appliedWeight / totalWeight;
+  const usageDataAgeDays = daysBetween(c.usageDataLastSyncedAt, asOf);
+  const npsAgeDays = c.npsResponseDate ? daysBetween(c.npsResponseDate, asOf) : null;
+
+  const contradictions = detectContradictions(c, signals);
+  const { level: confidence, reasons: confidenceReasons } = computeConfidence(
+    modelCoverage,
+    usageDataAgeDays,
+    contradictions,
+  );
+
+  // PRIORITY. Risk answers "is this bad"; priority answers "where does the next
+  // hour go". A 90-risk account worth GBP 12k does not outrank a 60-risk account
+  // worth GBP 210k, and the value floor stops small accounts vanishing entirely.
+  const valueWeight = VALUE_FLOOR + (1 - VALUE_FLOOR) * Math.min(1, c.arrGbp / ARR_REFERENCE);
+  const urgency = band(daysToRenewal, [
+    [0, 1],
+    [30, 1],
+    [60, 0.8],
+    [90, 0.6],
+    [130, 0.45],
+  ]);
+  const priorityScore = riskScore * valueWeight * urgency;
+
+  const noteFlags = scanNotes(c.customerNotes);
+  const riskBand = toBand(riskScore);
+
+  return {
+    customer: c,
+    daysToRenewal,
+    riskScore,
+    riskBand,
+    priorityScore,
+    signals,
+    confidence,
+    modelCoverage,
+    confidenceReasons,
+    contradictions,
+    noteFlags,
+    playbook: selectPlaybook(c, {
+      riskBand,
+      daysToRenewal,
+      signals,
+      contradictions,
+      noteFlags,
+      confidenceLow: confidence === 'Low',
+    }),
+    usageDataAgeDays,
+    npsAgeDays,
+  };
+}
+
+export function scoreAll(customers: Customer[], asOf: string): ScoredCustomer[] {
+  const scored = customers.map((c) => scoreCustomer(c, asOf));
+
+  const byRisk = [...scored].sort((a, b) => b.riskScore - a.riskScore);
+  const riskRankById = new Map(byRisk.map((s, i) => [s.customer.customerId, i + 1]));
+
+  return scored
+    .sort((a, b) => b.priorityScore - a.priorityScore)
+    .map((s, i) => ({
+      ...s,
+      priorityRank: i + 1,
+      riskOnlyRank: riskRankById.get(s.customer.customerId) ?? 0,
+    }));
+}
