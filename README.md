@@ -31,10 +31,13 @@ and Oakwell Design (£12k, the most distressed account in the book).
 
 Every account also carries a suggested next action, picked by a 17-rule decision table
 (`lib/playbook.ts`) rather than by a model, with the rule that fired named on the page: 7 accounts on
-*Today*, 15 on *This week*. First match wins, and on Northstar that ordering is wrong. The disputed
-invoice outranks the dead renewal process, so the action reads *resolve the billing dispute* on an
-account whose easiest problem to fix is that nobody has opened the renewal conversation with 18 days left. An
-account with five things wrong at once should render every rule that fired, not the first.
+*Today*, 15 on *This week*. First match wins, and Northstar shows the cost of that
+choice. The disputed invoice outranks the unopened renewal process, so the lead action reads *resolve
+the billing dispute*, while the cheapest problem on the account is that nobody has started the renewal
+conversation with 18 days left. The ordering itself is defensible, since unresolved money blocks any
+close. What is reductive is answering an account with five problems in one string. The fix is
+display-only, render every rule that fired with the first highlighted, and it needs no change to the
+rules themselves. It is the next commit this file would get.
 
 ---
 
