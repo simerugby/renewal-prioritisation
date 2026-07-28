@@ -95,6 +95,10 @@ export default function SecondRead({
           returns a clause number, not a quote, so the text below is rendered from the note itself and
           cannot be invented. It changes no score and no ranking.
         </p>
+        <p className="text-[11px] leading-relaxed text-muted-2">
+          This one runs live. Accounts further down the list arrive pre-filled from a committed batch, so
+          you can see both — a real call, and the version that works with no key at all.
+        </p>
         <button
           onClick={run}
           className="self-start rounded bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition-opacity hover:opacity-90"

@@ -33,6 +33,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/method" className="transition-colors hover:text-foreground">
                 How the score works
               </Link>
+              <Link href="/try" className="transition-colors hover:text-foreground">
+                Try your own data
+              </Link>
             </nav>
             <div className="ml-auto flex items-center gap-3">
               {/*

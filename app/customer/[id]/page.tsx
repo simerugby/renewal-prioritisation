@@ -69,7 +69,23 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   if (!row) notFound();
 
   const c = row.customer;
-  const secondRead = await precomputedSecondRead(c.customerId);
+  /*
+   * The top of the list deliberately does NOT pre-render its second read.
+   *
+   * A reviewer should see both halves of this feature. The committed batch makes
+   * it work without a key, which is the important property — but if every
+   * account arrived pre-filled, nobody would ever watch the model actually run,
+   * and "precomputed" invites the reasonable suspicion that the output was
+   * hand-picked. So the accounts a reviewer opens first show the button and make
+   * a live call.
+   *
+   * The batch is still there underneath: `app/api/second-read/route.ts` falls
+   * back to it on any failure, so a revoked key degrades these to real model
+   * output rather than to the keyword scanner.
+   */
+  const LIVE_ON_OPEN_TOP_N = 5;
+  const secondRead =
+    row.priorityRank <= LIVE_ON_OPEN_TOP_N ? null : await precomputedSecondRead(c.customerId);
 
   // The case this product exists for: nine structured signals are calm and the
   // free-text note is not. Quantum Public Sector is the largest account in the

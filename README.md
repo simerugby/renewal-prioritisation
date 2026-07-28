@@ -37,6 +37,10 @@ model output, and to a keyword scanner below that, and says on screen which one 
 | `npm run smoke` | End-to-end against a running server: status codes, content, AI failure paths. |
 | `npm run check` | Typecheck, lint, tests, secret scan, verification. |
 
+**Try it on a different book.** [`/try`](https://renewal-prioritisation.vercel.app/try) runs a CSV you
+drop in through the same parser, validator and scoring engine, in your browser — nothing uploaded,
+nothing stored. The portability claims below are checkable there rather than only in a test file.
+
 ---
 
 ## Who I would prioritise first
@@ -214,6 +218,39 @@ note instead of an error — the fallback proving itself in production before an
   nothing to calibrate against.
 - **Authentication.** You asked for something reviewers can open without credentials.
 - **A second AI feature**, and the ideas below are the reason that is a decision rather than a limit.
+
+### How data gets in, which is the largest thing not built
+
+Today the CSV is committed to the repository and read from disk. Changing the data means committing a
+new file. That is right for a case study built on a file you supplied, and it is wrong for anything a
+CSM would open on a Monday — so it is worth being explicit about the path rather than leaving it
+implied by an interface.
+
+`PortfolioSource` in `lib/data.ts` is the seam: two methods, returning raw records and any structural
+issues. Everything downstream — validation, quarantine, scoring, the data-quality banner — already
+works on whatever it returns. Three steps, in the order I would actually do them:
+
+1. **Upload in the browser** (hours). A CSM drops a file, it is parsed, validated and scored in the
+   page. No infrastructure, no persistence, no auth. It unblocks one person immediately and it is the
+   right *first* step — but it is also a human doing a chore every week, which is precisely the kind of
+   dependency that dies the moment the person who set it up moves on.
+2. **A watched location** (days). The export lands in SharePoint, S3 or a Drive folder on whatever
+   schedule the company already has, and the app pulls it on a TTL. This is where most portfolio
+   companies actually are, and it removes the weekly human step. The work is credentials and a fetch;
+   the parsing and validation are unchanged.
+3. **Query the system of record directly** (weeks). A warehouse table or a CRM API. Same interface, and
+   at that point the snapshot anchor becomes `now()` instead of a fixed date.
+
+Step 1 is built, at [`/try`](https://renewal-prioritisation.vercel.app/try), because the argument that
+this survives a different export is worth more if you can test it than if you have to read a test file.
+It is client-side only: the parser, the validator and the scoring engine are pure TypeScript, so they
+run in the browser and a file with real customer names in it never leaves the machine. What it does not
+do is persist anything, which is exactly why it is step 1 and not the answer.
+
+The reason to describe all three rather than build one: **the failure mode is not the pipe, it is the
+schema.** Company two's export has different columns and unseen enum values — that is a real fixture in
+`lib/portability.test.ts`, and the validation layer already handles it by quarantining and reporting
+rather than guessing. Whichever pipe is built, that layer is what makes it safe, and it exists.
 
 ### AI at design time, not at runtime
 
