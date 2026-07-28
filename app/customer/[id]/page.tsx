@@ -149,33 +149,21 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4">
           <Card
-            title="Evidence behind the score"
-            subtitle="Every point attributed to the signal that produced it. Disagree with a line, not with the total."
+            eyebrow="The score"
+            title={`How ${row.riskScore.toFixed(0)} was arrived at`}
+            footnote="Every point traces to one signal and one number in the source file. Disagree with a line rather than with the total — that is what the breakdown is for."
           >
             <EvidencePanel row={row} />
           </Card>
 
-          {row.contradictions.length > 0 && (
-            <Card
-              title="Signals that disagree"
-              subtitle="Left unresolved on purpose. Picking a side here would invent a fact — these lower confidence instead of moving the score."
-            >
-              <ul className="flex flex-col gap-3">
-                {row.contradictions.map((x) => (
-                  <li key={x.key}>
-                    <p className="text-[12px] font-medium">{x.summary}</p>
-                    <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{x.detail}</p>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
           <Card
-            title="Account note"
-            subtitle="Free text from the CRM. No rule in the scoring model reads this column."
+            eyebrow="The note"
+            title="What the CRM says in free text"
+            footnote="Tags come from a keyword scanner, not a model. They select the triage list on the portfolio page, and they are the control group the second read is measured against."
           >
-            <p className="text-[13px] leading-relaxed">{c.customerNotes || <span className="text-muted-2">No note recorded.</span>}</p>
+            <blockquote className="border-l-2 border-border-strong pl-3 text-[14px] leading-relaxed">
+              {c.customerNotes || <span className="text-muted-2">No note recorded.</span>}
+            </blockquote>
             {row.noteFlags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {row.noteFlags.map((f) => (
@@ -189,16 +177,35 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                 ))}
               </div>
             )}
-            <p className="mt-2.5 text-[11px] leading-relaxed text-muted-2">
-              Tags above come from a keyword scanner, not a model. They select the triage list on the
-              portfolio page, and they are the control group the second read is measured against.
-            </p>
           </Card>
 
-          <Card title="Data freshness" subtitle="What was known, and when it was last true.">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
+          {/*
+            Contradictions and data freshness were two separate cards saying the
+            same thing in different words — here is a reason to trust this number
+            less. They are one section now, which is both fewer cards and a truer
+            description of what they are.
+          */}
+          <Card
+            eyebrow="Caveats"
+            title={`Why confidence is ${row.confidence.toLowerCase()}`}
+            footnote="None of this moves the risk score. Resolving a contradiction silently, in either direction, would invent a fact — so it costs confidence instead and the judgement stays with the person who can pick up a phone."
+          >
+            <p className="text-[13px] leading-relaxed">{row.confidenceReasons.join(' ')}</p>
+
+            {row.contradictions.length > 0 && (
+              <ul className="mt-4 flex flex-col gap-3 border-t border-border-subtle pt-4">
+                {row.contradictions.map((x) => (
+                  <li key={x.key}>
+                    <p className="text-[12px] font-semibold text-risk-elevated">{x.summary}</p>
+                    <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{x.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border-subtle pt-4 text-[12px]">
               <div>
-                <dt className="text-muted-2">Usage last synced</dt>
+                <dt className="text-[10px] uppercase tracking-wide text-muted-2">Usage last synced</dt>
                 <dd className="tnum mt-0.5">
                   {c.usageDataLastSyncedAt}{' '}
                   <span className={row.usageDataAgeDays > 7 ? 'text-risk-elevated' : 'text-muted'}>
@@ -207,19 +214,15 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-2">NPS response</dt>
+                <dt className="text-[10px] uppercase tracking-wide text-muted-2">NPS response</dt>
                 <dd className="tnum mt-0.5">
                   {c.npsResponseDate ?? <span className="text-muted-2">not recorded</span>}{' '}
                   {row.npsAgeDays !== null && (
                     <span className={row.npsAgeDays > 120 ? 'text-risk-elevated' : 'text-muted'}>
-                      ({row.npsAgeDays}d)
+                      ({row.npsAgeDays}d old)
                     </span>
                   )}
                 </dd>
-              </div>
-              <div className="col-span-2">
-                <dt className="text-muted-2">Why confidence is {row.confidence.toLowerCase()}</dt>
-                <dd className="mt-0.5 leading-relaxed text-muted">{row.confidenceReasons.join(' ')}</dd>
               </div>
             </dl>
           </Card>
@@ -260,11 +263,15 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             </div>
           </section>
 
-          <Card title="Second read" subtitle="The one place this product calls a model. It reads the note; it does not touch the score.">
+          <Card
+            eyebrow="The one AI call"
+            title="Second read"
+            footnote="It returns a clause number, not a quote, so the text is rendered from the note and cannot be invented. It changes no score and no ranking."
+          >
             <SecondRead customerId={c.customerId} initial={secondRead} />
           </Card>
 
-          <Card title="Decide and record" subtitle="What happens next, and who owns it.">
+          <Card eyebrow="Your call" title="Decide and record">
             <DecisionRecorder
               customerId={c.customerId}
               suggestedAction={row.playbook.action}

@@ -53,26 +53,52 @@ export function ConfidenceBadge({ level, coverage }: { level: ConfidenceLevel; c
   );
 }
 
+/**
+ * A card with a three-level header, because a one-level one stopped working.
+ *
+ * Every section used to be a 13px semibold title over a 12px muted sentence, so
+ * eight stacked cards read as one undifferentiated column — the titles and the
+ * prose inside them were nearly the same size and weight, and nothing told you
+ * where a section began.
+ *
+ *   eyebrow    10px uppercase, tinted. Names the KIND of thing this is.
+ *   title      15px semibold. Readably bigger than any body text on the page.
+ *   footnote   11px, at the BOTTOM. Explanations of method belong after the
+ *              content, not between the title and it, where they used to push
+ *              the actual answer below the fold.
+ */
 export function Card({
+  eyebrow,
   title,
   subtitle,
+  footnote,
   children,
   className = '',
 }: {
+  eyebrow?: string;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
+  footnote?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={`rounded-lg border border-border-subtle bg-surface ${className}`}>
-      {(title || subtitle) && (
-        <header className="border-b border-border-subtle px-4 py-3">
-          {title && <h2 className="text-[13px] font-semibold tracking-tight">{title}</h2>}
-          {subtitle && <p className="mt-0.5 text-[12px] leading-relaxed text-muted">{subtitle}</p>}
+    <section className={`overflow-hidden rounded-lg border border-border-subtle bg-surface ${className}`}>
+      {(title || subtitle || eyebrow) && (
+        <header className="border-b border-border-subtle bg-surface-2/40 px-4 py-3">
+          {eyebrow && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-2">{eyebrow}</p>
+          )}
+          {title && <h2 className="mt-0.5 text-[15px] font-semibold tracking-tight">{title}</h2>}
+          {subtitle && <p className="mt-1 text-[12px] leading-relaxed text-muted">{subtitle}</p>}
         </header>
       )}
-      <div className="p-4">{children}</div>
+      <div className="px-4 py-4">{children}</div>
+      {footnote && (
+        <footer className="border-t border-border-subtle px-4 py-2.5 text-[11px] leading-relaxed text-muted-2">
+          {footnote}
+        </footer>
+      )}
     </section>
   );
 }

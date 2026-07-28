@@ -91,9 +91,7 @@ export default function SecondRead({
     return (
       <div className="flex flex-col gap-2.5">
         <p className="text-[12px] leading-relaxed text-muted">
-          Reads the account note against the signals the score already counted, and says what it adds. It
-          returns a clause number, not a quote, so the text below is rendered from the note itself and
-          cannot be invented. It changes no score and no ranking.
+          Reads the account note against the signals the score already counted, and says what it adds.
         </p>
         <p className="text-[11px] leading-relaxed text-muted-2">
           This one runs live. Accounts further down the list arrive pre-filled from a committed batch, so
