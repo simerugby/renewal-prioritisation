@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/*
+  Design tokens.
+
+  Risk colour is a four-step ramp, and it is never the only carrier of meaning —
+  every band is also spelled out in text, because a CSM triaging a renewal book
+  should not have to distinguish amber from red to know what to do.
+*/
+:root {
+  --background: #fbfbfa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f2;
+  --border: #e4e4e1;
+  --border-strong: #d0d0cc;
+  --foreground: #1a1a18;
+  --muted: #6b6b66;
+  --muted-2: #8f8f89;
+  --accent: #1f4fd8;
+  --accent-soft: #eef2ff;
+
+  --risk-critical: #c2410c;
+  --risk-critical-bg: #fff1e9;
+  --risk-elevated: #b45309;
+  --risk-elevated-bg: #fef6e7;
+  --risk-watch: #4d7c0f;
+  --risk-watch-bg: #f3f8e8;
+  --risk-stable: #047857;
+  --risk-stable-bg: #ecfdf5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d0d0f;
+    --surface: #151517;
+    --surface-2: #1d1d20;
+    --border: #2a2a2e;
+    --border-strong: #3a3a40;
+    --foreground: #ededeb;
+    --muted: #9a9a94;
+    --muted-2: #77776f;
+    --accent: #7f9cf5;
+    --accent-soft: #1a1f36;
+
+    --risk-critical: #fb923c;
+    --risk-critical-bg: #2a1710;
+    --risk-elevated: #fbbf24;
+    --risk-elevated-bg: #261c0c;
+    --risk-watch: #a3e635;
+    --risk-watch-bg: #1a2010;
+    --risk-stable: #34d399;
+    --risk-stable-bg: #0d201a;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border-subtle: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-risk-critical: var(--risk-critical);
+  --color-risk-critical-bg: var(--risk-critical-bg);
+  --color-risk-elevated: var(--risk-elevated);
+  --color-risk-elevated-bg: var(--risk-elevated-bg);
+  --color-risk-watch: var(--risk-watch);
+  --color-risk-watch-bg: var(--risk-watch-bg);
+  --color-risk-stable: var(--risk-stable);
+  --color-risk-stable-bg: var(--risk-stable-bg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures everywhere a number is compared down a column. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(90deg, transparent, rgba(128, 128, 128, 0.12), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
