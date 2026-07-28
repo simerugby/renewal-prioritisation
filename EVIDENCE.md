@@ -2,11 +2,11 @@
 
 Supporting material for [README.md](README.md), which answers the questions you asked. This file is
 the working underneath: the measurements, the methodology, and the places where testing my own
-assumptions changed my mind. Nothing here is required reading — the README stands on its own.
+assumptions changed my mind. Nothing here is required reading, because the README stands on its own.
 
 Every figure here reproduces from a command, with the exceptions named where they appear: the two
 recall figures from prompt versions no longer in the repo, the two stickiness correlations below, and
-the rejection counts from the first Second Read batch — all computed over the file or recorded from
+the rejection counts from the first Second Read batch, all computed over the file or recorded from
 runs whose code is gone, none of them printed by anything. Worth knowing before you run any of it: the
 rules columns of every eval run without a key, and the model columns need `OPENAI_API_KEY`.
 `npm run verify`, `npm run sensitivity`, `npm run eval`, `npm run eval:beyond`, `npm run eval:cross`.
@@ -19,7 +19,7 @@ The obvious objection to a hand-built rubric is that the ranking is an artefact 
 That is testable without any outcome data: jitter every weight and see whether the answer survives.
 `npm run sensitivity` does it with a fixed seed, so the figures below reproduce exactly.
 
-**Perturbation — every one of the nine weights randomly moved by up to ±40%, 1,000 times:**
+**Perturbation, every one of the nine weights randomly moved by up to ±40%, 1,000 times:**
 
 | | Held across trials |
 |---|---|
@@ -28,7 +28,7 @@ That is testable without any outcome data: jitter every weight and see whether t
 | Same accounts in the top 5 | **100%** |
 | Same accounts in the top 10 | **100%** |
 
-**Ablation — delete each signal entirely and re-rank:** the top 5 is unchanged in all nine cases.
+**Ablation, deleting each signal entirely and re-ranking:** the top 5 is unchanged in all nine cases.
 Removing adoption trend, the heaviest signal at 18 of 100, does not move it. Northstar and Oakwell are
 not top-ranked because of how I weighted anything; they are extreme on six signals at once.
 
@@ -56,13 +56,13 @@ too, and it moves the top of the list further than any of the nine weights does.
 | 0.27 (−40%) | #6 |
 | **0.45 (shipped)** | **#5** |
 | 0.63 (+40%) | #2 |
-| 0 — no floor, so the value axis is ARR, still clamped at the £210,000 reference | #20 |
+| 0, no floor, so the value axis is ARR, still clamped at the £210,000 reference | #20 |
 
 Across 1,000 trials with the floor jittered ±40% Oakwell ranges #2 to #6, median #5; jitter the urgency
 curve as well and it ranges #2 to #8 and sits in the top 5 in 73% of them. So the top 5 is a property of
 the data under any weighting, and Oakwell's position inside it is a property of the floor.
 
-Worth saying plainly, because straight expected loss — risk × ARR × urgency, no floor and no clamp — is
+Worth saying plainly, because straight expected loss (risk × ARR × urgency, no floor and no clamp) is
 a defensible ranking and it is not this one. It puts Oakwell at #20: the highest-risk account in the
 book, renewing in 13 days, ranked below nineteen accounts in better shape because it is worth £12,000.
 It also promotes Sterling Aviation #14 → #7, Quantum Public Sector #15 → #8 and Aurora Marine #11 → #9.
@@ -78,27 +78,27 @@ The file has 25 columns. Nine are scored, several are identity or filters, and t
 deliberately left out. Leaving a column unused is a decision, so each one has a measurement behind it
 rather than an oversight.
 
-**`weekly_active_users_30d` — excluded because it barely varies.** As a stickiness ratio (weekly ÷
+**`weekly_active_users_30d`, excluded because it barely varies.** As a stickiness ratio (weekly ÷
 monthly actives) it looks promising, and it correlates −0.64 with the risk score. But across the whole
 book it ranges **55.6% to 69.5%**, a 13.9-point spread. A signal that barely varies cannot separate
 accounts; it would add weight without adding information. It is also 0.70 correlated with seat
 utilisation and 0.59 with adoption trend, and I am not going to lean on that, because those two are
-0.94 correlated with each other and both read `active_users_30d` — 30 of the 100 points already measure
+0.94 correlated with each other and both read `active_users_30d`. 30 of the 100 points already measure
 one column twice. That is deliberate, since direction and depth answer different questions and I capped
 the pair at 30 combined, but it means the honest reason to drop stickiness is the variance, not the
 overlap.
 
-**`contract_term_months` — excluded because it is a proxy for segment, not for risk.** The raw pattern
+**`contract_term_months`, excluded because it is a proxy for segment rather than for risk.** The raw pattern
 is striking: mean risk 35.1 on 12-month terms, 15.7 on 24-month, 11.7 on 36-month. It is also
 confounded. Term correlates **0.78** with ARR, and the split is almost total: 1 of 23 twelve-month
 accounts is Enterprise, against 7 of 7 on 36-month terms. Scoring term as risk would systematically
 penalise every SMB for being an SMB. That is a bias wearing a signal's clothes.
 
-**`products_owned` — excluded because the effect is not there.** Mean risk is 28.6 on one product and
+**`products_owned`, excluded because the effect is not there.** Mean risk is 28.6 on one product and
 26.4 on two, which is noise. Three-product accounts average 13.2, but there are only three of them.
 Multi-product stickiness is a real effect in general; this book is too small to show it.
 
-**`csm_name` — used as a table filter and nothing else, and it is the largest thing left on the table.**
+**`csm_name`, used as a table filter and nothing else, and the largest thing left on the table.**
 Aisha Khan holds priority #1, #2, #4, #5 and #7: £637,000 across five accounts, four of them renewing
 inside 32 days. Ben Carter's whole book of eight starts at #18. Nothing in the product says that. The
 question a head of CS asks after "which renewals need attention" is whether the person who owns them
@@ -126,7 +126,7 @@ then says what the note adds. One call type, one call per account, no second cal
 Three properties are enforced by code rather than promised in a prompt:
 
 1. **The model returns a clause number, not a quote.** Code splits the note into clauses, the model
-   points at one by index, and code renders the text. A fabricated quote is not *checked and rejected* —
+   points at one by index, and code renders the text. A fabricated quote is not *checked and rejected*:
    it is unrepresentable.
 2. **The score is not in the prompt.** The model sees which signals fired and their evidence; never the
    risk number, the band or the rank. If it knew an account scored 15/100 it would reason toward that
@@ -138,7 +138,7 @@ Three properties are enforced by code rather than promised in a prompt:
 **Counting what the validator threw away caught a bug of mine, not the model's.** The first full batch
 over all forty accounts logged 42 rejected outputs, showing on two thirds of the book. That reads like
 the checks earning their keep, and I nearly wrote it up that way. Nineteen of the 42 were findings
-citing a clause that "does not exist" — and the clauses did exist. The prompt numbered them from 0 and
+citing a clause that "does not exist", and the clauses did exist. The prompt numbered them from 0 and
 the model answered in 1-based terms, which is what any reader would do. Numbering from 1 and
 subtracting on the way in took the same batch to **0 rejections**. A second branch, which let the model
 challenge a structured field rather than the note, survived validation once in twenty-three attempts;
@@ -147,8 +147,8 @@ visible from reading the output. Both came from counting the rejects, which is t
 them on screen rather than swallowing them.
 
 **It answers yes/no questions, not a multiple choice, and that was a correction.** The first version
-asked the model to pick one of four directions. It returned *adds-nothing* for Quantum — the account
-this feature exists for — and *adds-opportunity* for a competitor being trialled. I should have
+asked the model to pick one of four directions. It returned *adds-nothing* for Quantum, the account
+this feature exists for, and *adds-opportunity* for a competitor being trialled. I should have
 predicted that: `npm run eval` measures this model at 92–93% on detection and **45%** on picking a
 label from a taxonomy, and I had built on the second number. Independent binaries sit much closer to
 the task that was actually measured.
@@ -158,7 +158,7 @@ systems on "does this note add risk the signals do not already have":
 
 | | Precision | Recall | Accounts it puts on the list |
 |---|---|---|---|
-| Keyword rules | 71% | 48% | **9 — £1,281,000** |
+| Keyword rules | 71% | 48% | **9 accounts, £1,281,000** |
 | `gpt-4.1-nano` | 67% | 80% | 19 of 28 calm accounts |
 
 Two of the model's false positives, Greenway Bank and BluePeak Software, are a disagreement about the
@@ -171,12 +171,12 @@ the portfolio page and the model reads the note once you are on one. Each does t
 does better.
 
 **One caveat I will not bury: I tuned that prompt twice against 40 labels I wrote myself.** The first
-version biased to "no" (recall 25%), the second to "yes" (recall 96%) — both earlier prompt versions,
+version biased to "no" (recall 25%), the second to "yes" (recall 96%). Both are earlier prompt versions,
 not the one in the table above, and both scored before I corrected the Harbor Retail label. Those
 bracket the answer rather than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
 above its own numbers. `eval:cross` is the closest thing to an
 independent check, and even that is qualified: I wrote the fixture and its labels too. What is
-genuinely true of it is that nothing in the system was tuned for it — same prompt template, same
+genuinely true of it is that nothing in the system was tuned for it: same prompt template, same
 regexes, same validators. An honest reading of every number here is that they were produced by the
 person being evaluated.
 
@@ -196,9 +196,9 @@ This is a snapshot of 40 rows. Everything below exists because the next file wil
 **Nothing in the score is tuned to this file's contents.** Every weight, threshold, curve and staleness
 limit the score uses lives in `lib/config.ts`; `lib/scoring.ts` holds the logic and the two scale
 constants it needs, a 0-100 rescale and a day in milliseconds. The next-action table is the exception
-and it is worth naming rather than hiding: seven cut-offs are written into `lib/playbook.ts` — 35, 60
+and it is worth naming rather than hiding: seven cut-offs are written into `lib/playbook.ts`: 35, 60
 and 90 days to renewal, 0.65 and 0.6 on two signal curves, two critical tickets, half a range in the
-default — and 7 of its 17 rules fire off the keyword scanner, the least portable component in the repo.
+default, and 7 of its 17 rules fire off the keyword scanner, the least portable component in the repo.
 That file is meant to be rewritten per company, so today that means editing code rather than config.
 Lifting its numbers into `config.ts` is an hour I did not spend. The value
 reference is derived from the portfolio's ARR distribution at load time; an earlier version had
@@ -246,7 +246,7 @@ It found three defects in the first run, and all three were the silent kind:
 
 | Found | Why it mattered |
 |---|---|
-| A trailing comma produced two columns named `""`, and assigning by name meant the second **overwrote the first** — `id,name,,` + `1,bob,x,y` parsed to `{id:"1", name:"bob", "":"y"}` and `x` vanished | Excel writes trailing commas by default. No error was raised anywhere |
+| A trailing comma produced two columns named `""`, and assigning by name meant the second **overwrote the first**. `id,name,,` + `1,bob,x,y` parsed to `{id:"1", name:"bob", "":"y"}` and `x` vanished | Excel writes trailing commas by default. No error was raised anywhere |
 | `scoreAll` keyed its risk ranking by customer id, so duplicate ids **collapsed to one rank** | The ranking quietly stopped being a ranking |
 | An unquoted comma inside free text truncated the note and dropped the rest | The most common CSV defect there is, and it was invisible |
 
@@ -283,6 +283,6 @@ Every number in the README and in this file is printed by one of the commands ab
 exceptions listed at the top of this file: the 25% and 96% recalls of the two discarded prompt versions,
 the two stickiness correlations, and the first batch's rejection counts. Both were recorded from
 runs I cannot reproduce, because neither prompt is still in the repo. They are in the document
-because the tuning history is the caveat — but they are the only two figures here you have to take
+because the tuning history is the caveat, but they are the only two figures here you have to take
 on trust, and you should read them as the range I searched rather than as measurements of anything
 that ships.
