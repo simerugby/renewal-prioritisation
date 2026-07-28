@@ -4,11 +4,12 @@ Supporting material for [README.md](README.md), which answers the questions you 
 the working underneath: the measurements, the methodology, and the places where testing my own
 assumptions changed my mind. Nothing here is required reading, because the README stands on its own.
 
-Every figure here reproduces from a command, with the exceptions named where they appear: the two
-recall figures from prompt versions no longer in the repo, the two stickiness correlations below, and
-the rejection counts from the first Second Read batch, all computed over the file or recorded from
-runs whose code is gone, none of them printed by anything. Worth knowing before you run any of it: the
-rules columns of every eval run without a key, and the model columns need `OPENAI_API_KEY`.
+Every figure here is either printed by one of the commands below or computed in line from the
+supplied file, with three exceptions, each named where it appears: the 25% and 96% recalls of two
+discarded prompt versions, which no longer exist in the repo and cannot be reproduced at all; the two
+stickiness correlations; and the rejection counts from the first Second Read batch. Worth knowing
+before you run any of it: the rules columns of every eval run without a key, and the model columns
+need `OPENAI_API_KEY`.
 `npm run verify`, `npm run sensitivity`, `npm run eval`, `npm run eval:beyond`, `npm run eval:cross`.
 
 ---
@@ -279,10 +280,10 @@ npm run eval:cross    # the same call on a company the system has never seen
 npm test              # 119 tests, including the model-output validators
 ```
 
-Every number in the README and in this file is printed by one of the commands above, with the
-exceptions listed at the top of this file: the 25% and 96% recalls of the two discarded prompt versions,
-the two stickiness correlations, and the first batch's rejection counts. Both were recorded from
-runs I cannot reproduce, because neither prompt is still in the repo. They are in the document
-because the tuning history is the caveat, but they are the only two figures here you have to take
-on trust, and you should read them as the range I searched rather than as measurements of anything
+Every number in the README and in this file is either printed by one of the commands above or
+computed in line from the supplied file, with the three exceptions listed at the top. Only two of
+them are unreproducible: the 25% and 96% recalls, because the prompt versions that produced them are
+no longer in the repo. `npm run eval:beyond` repeats both in its footer, but it is quoting the same
+history rather than measuring it. They are here because the tuning history is the caveat, and they
+are the only two figures you have to take on trust, and you should read them as the range I searched rather than as measurements of anything
 that ships.

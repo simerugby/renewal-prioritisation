@@ -372,7 +372,7 @@ model output, and to a keyword scanner below that, and says on screen which one 
 
 | command | what it does |
 |---|---|
-| `npm run verify` | Prints the ranking and every figure quoted in these two documents. |
+| `npm run verify` | Prints the ranking, each of the five findings with its figures, the confidence and note-scanner tables, and the three columns left unscored. |
 | `npm run sensitivity` | Perturbs the weights 1,000 times to test whether the ranking survives them. |
 | `npm run eval` / `eval:beyond` / `eval:cross` | The three measurements behind the AI decision. |
 | `npm test` | 119 tests: unit, property-based, a second company's export, model-output validation. |
