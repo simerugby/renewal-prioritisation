@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
+import ThemeToggle, { ThemeScript } from '@/components/ThemeToggle';
 import { SNAPSHOT_DATE } from '@/lib/config';
 import './globals.css';
 
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-full flex flex-col">
         <header className="border-b border-border-subtle bg-surface">
           <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
@@ -30,14 +34,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 How the score works
               </Link>
             </nav>
-            <div className="ml-auto flex items-center gap-2 text-[12px] text-muted-2">
+            <div className="ml-auto flex items-center gap-3">
               {/*
                 The snapshot date sits in the chrome on every page, deliberately.
                 Every "days to renewal" in this app counts from here, not from
                 today, so the numbers reproduce whenever anyone opens it.
               */}
-              <span className="inline-block size-1.5 rounded-full bg-muted-2" aria-hidden />
-              Portfolio snapshot &mdash; {SNAPSHOT_DATE}
+              <span className="flex items-center gap-2 text-[12px] text-muted-2">
+                <span className="inline-block size-1.5 rounded-full bg-muted-2" aria-hidden />
+                Portfolio snapshot &mdash; {SNAPSHOT_DATE}
+              </span>
+              <ThemeToggle />
             </div>
           </div>
         </header>

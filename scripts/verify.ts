@@ -12,6 +12,7 @@
  */
 import { loadPortfolio } from '../lib/data';
 import { SNAPSHOT_DATE } from '../lib/config';
+import { isQuietButFlagged } from '../lib/secondRead';
 import { runNoteScanEval } from '../eval/noteScanEval';
 
 const gbp = (n: number) => `£${n.toLocaleString('en-GB')}`;
@@ -62,7 +63,12 @@ async function main() {
   }
 
   console.log('\n--- Accounts where the notes carry risk the score cannot see ---');
-  const blind = rows.filter((r) => r.riskScore < 30 && r.noteFlags.some((f) => ['sponsor-loss', 'exit-signal', 'competitive-threat', 'budget-freeze', 'paperwork-stuck'].includes(f.key)));
+  // Uses the SAME predicate the app ships, imported rather than retyped. The
+  // first version of this line hard-coded `riskScore < 30` and a five-item flag
+  // list, so it printed 6 accounts for the concept the app, the README and
+  // eval:beyond all put at 9 — a £507,000 discrepancy between the verification
+  // script and the thing it was verifying.
+  const blind = rows.filter(isQuietButFlagged);
   for (const r of blind) {
     console.log(`  ${r.customer.customerName} — risk ${r.riskScore.toFixed(1)}, ${gbp(r.customer.arrGbp)}, flags: ${r.noteFlags.map((f) => f.key).join(', ')}`);
   }

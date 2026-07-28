@@ -32,9 +32,20 @@ const DIRECTION_TONE: Record<string, string> = {
   'adds-nothing': 'text-muted bg-surface-2 border-border-subtle',
 };
 
-export default function SecondRead({ customerId }: { customerId: string }) {
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
-  const [result, setResult] = useState<SecondReadResult | null>(null);
+export default function SecondRead({
+  customerId,
+  initial = null,
+}: {
+  customerId: string;
+  /**
+   * The committed batch result, rendered by the server. Without it the panel
+   * starts empty behind a button, the result is lost on navigation, and a
+   * reviewer clicking through several accounts never sees the feature at all.
+   */
+  initial?: SecondReadResult | null;
+}) {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>(initial ? 'done' : 'idle');
+  const [result, setResult] = useState<SecondReadResult | null>(initial);
   const [error, setError] = useState<string | null>(null);
 
   const run = async () => {

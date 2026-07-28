@@ -117,8 +117,11 @@ does better.
 **One caveat I will not bury: I tuned that prompt twice against 40 labels I wrote myself.** The first
 version biased to "no" (recall 25%), the second to "yes" (recall 96%). Those bracket the answer rather
 than find it, and both are overfitted to a set of forty. `npm run eval:beyond` prints that warning
-above its own numbers. It is the reason `eval:cross` — a book I did not label and did not tune for —
-is the figure I trust most.
+above its own numbers. `eval:cross` is the closest thing to an
+independent check, and even that is qualified: I wrote the fixture and its labels too. What is
+genuinely true of it is that nothing in the system was tuned for it — same prompt template, same
+regexes, same validators. An honest reading of every number here is that they were produced by the
+person being evaluated.
 
 **No second call.** No critic, no self-verifier, no judge. At this model size the deterministic
 validator is a strictly better critic than another pass of the same model: it is free, reproducible,

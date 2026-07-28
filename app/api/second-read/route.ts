@@ -1,9 +1,8 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { loadPortfolio } from '@/lib/data';
 import { checkRateLimit, clientKeyFrom } from '@/lib/rateLimit';
+import { readSecondReadBatch } from '@/lib/secondReadBatch';
 import {
   SECOND_READ_SCHEMA,
   buildFallbackSecondRead,
@@ -40,25 +39,13 @@ export const runtime = 'nodejs';
 const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-nano';
 const TIMEOUT_MS = 15_000;
 const MAX_OUTPUT_TOKENS = 600;
-const BATCH_PATH = path.join(process.cwd(), 'data', 'second-read.json');
 
 const cache = new Map<string, SecondReadResult>();
-let batch: Record<string, SecondReadResult> | null | undefined;
 
 function redactSecrets(text: string): string {
   return text
     .replace(/sk-[A-Za-z0-9_-]{16,}/g, 'sk-[REDACTED]')
     .replace(/Bearer\s+[A-Za-z0-9._-]{16,}/gi, 'Bearer [REDACTED]');
-}
-
-async function readBatch(): Promise<Record<string, SecondReadResult> | null> {
-  if (batch !== undefined) return batch ?? null;
-  try {
-    batch = JSON.parse(await fs.readFile(BATCH_PATH, 'utf8')) as Record<string, SecondReadResult>;
-  } catch {
-    batch = null;
-  }
-  return batch ?? null;
 }
 
 export async function POST(request: Request) {
@@ -81,14 +68,14 @@ export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    const precomputed = (await readBatch())?.[customerId];
+    const precomputed = (await readSecondReadBatch())?.[customerId];
     if (precomputed) return NextResponse.json({ ...precomputed, source: 'precomputed' });
     return NextResponse.json(buildFallbackSecondRead(row, 'no-key'));
   }
 
   const limit = checkRateLimit(clientKeyFrom(request));
   if (!limit.allowed) {
-    const precomputed = (await readBatch())?.[customerId];
+    const precomputed = (await readSecondReadBatch())?.[customerId];
     if (precomputed) return NextResponse.json({ ...precomputed, source: 'precomputed' });
     return NextResponse.json(buildFallbackSecondRead(row, 'rate-limited'), {
       headers: { 'Retry-After': String(limit.retryAfterSeconds) },
@@ -135,7 +122,7 @@ export async function POST(request: Request) {
     const reason = /timeout|aborted/i.test(message) ? 'timeout' : /429|rate/i.test(message) ? 'rate-limited' : 'error';
     console.error(`[api/second-read] falling back (${reason}): ${redactSecrets(message)}`);
 
-    const precomputed = (await readBatch())?.[customerId];
+    const precomputed = (await readSecondReadBatch())?.[customerId];
     if (precomputed) return NextResponse.json({ ...precomputed, source: 'precomputed' });
     return NextResponse.json(buildFallbackSecondRead(row, reason));
   }

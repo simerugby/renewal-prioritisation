@@ -41,8 +41,15 @@
   --viz-axis: #9a9a94;
 }
 
+/*
+  Dark mode is applied two ways, and the order matters.
+  - the media query is the default for someone who has never touched the toggle,
+    and it is scoped with :not([data-theme]) so an explicit choice always wins;
+  - the attribute selector is what the toggle sets, in both directions, so a
+    reader on a dark OS can force light and vice versa.
+*/
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: #0d0d0f;
     --surface: #151517;
     --surface-2: #1d1d20;
@@ -68,6 +75,33 @@
     --viz-grid: #26262a;
     --viz-axis: #6b6b64;
   }
+}
+
+:root[data-theme="dark"] {
+    --background: #0d0d0f;
+    --surface: #151517;
+    --surface-2: #1d1d20;
+    --border: #2a2a2e;
+    --border-strong: #3a3a40;
+    --foreground: #ededeb;
+    --muted: #9a9a94;
+    --muted-2: #77776f;
+    --accent: #7f9cf5;
+    --accent-soft: #1a1f36;
+
+    --risk-critical: #fb923c;
+    --risk-critical-bg: #2a1710;
+    --risk-elevated: #fbbf24;
+    --risk-elevated-bg: #261c0c;
+    --risk-watch: #9ca3af;
+    --risk-watch-bg: #1b1d21;
+    --risk-stable: #34d399;
+    --risk-stable-bg: #0d201a;
+
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+    --viz-grid: #26262a;
+    --viz-axis: #6b6b64;
 }
 
 @theme inline {

@@ -6,6 +6,7 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { Card, ConfidenceBadge, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
 import { loadCustomer } from '@/lib/data';
 import { MATERIAL_NOTE_FLAGS } from '@/lib/secondRead';
+import { precomputedSecondRead } from '@/lib/secondReadBatch';
 
 /**
  * Rendered per request rather than pre-generated, for two reasons.
@@ -68,6 +69,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   if (!row) notFound();
 
   const c = row.customer;
+  const secondRead = await precomputedSecondRead(c.customerId);
 
   // The case this product exists for: nine structured signals are calm and the
   // free-text note is not. Quantum Public Sector is the largest account in the
@@ -210,7 +212,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
           </Card>
 
           <Card title="Second read" subtitle="The one place this product calls a model. It reads the note; it does not touch the score.">
-            <SecondRead customerId={c.customerId} />
+            <SecondRead customerId={c.customerId} initial={secondRead} />
           </Card>
 
           <Card title="Decide and record" subtitle="What happens next, and who owns it.">

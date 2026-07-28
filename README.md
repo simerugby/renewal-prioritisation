@@ -137,8 +137,11 @@ would phrase them and re-ran:
 | Keyword rules | **95%** | **7%** | **1 of 4** |
 | `gpt-4.1-nano` | 92% | **93%** | **3 of 4** |
 
-The third column is the one I trust most: a second company's export, notes in a different register
-(*"practice manager retiring in sept, no handover planned yet"*), nothing tuned for it.
+The third column comes from a second company's export with notes in a different register (*"practice
+manager retiring in sept, no handover planned yet"*). Read it carefully: **I wrote that fixture and
+its labels**, so it is not unseen data. What it does show is that nothing in the *system* was adjusted
+for it — same prompt template, same regexes, same validators. That is a weaker claim than it first
+looks, and stating it precisely matters more here than anywhere else in this document.
 
 **Said plainly: on the forty notes you supplied the rules beat the model, and if this file were the
 whole world I would delete the API call.** It earns its place because company number eleven writes its
@@ -165,7 +168,9 @@ Full methodology, including where my own measurements were wrong twice, is in
 
 **On cost.** One call per account, on demand — never on page load, never looped over the portfolio.
 Capped at 600 output tokens, cached per account, and rate limited to 40 calls per IP per 10 minutes so
-a public URL cannot run up your bill. The model is `gpt-4.1-nano`, chosen by your key rather than by
+a public URL cannot casually run up your bill. That limit is in-memory and therefore per instance, so
+on serverless the real ceiling is the limit times the number of warm instances — a bound, not a
+guarantee, and `lib/rateLimit.ts` says so where the code is. The model is `gpt-4.1-nano`, chosen by your key rather than by
 me: it is scoped to exactly one model, which I found by asking the API rather than guessing. My first
 deploy requested `gpt-4o-mini`, got a 403, and the app served the deterministic result with a visible
 note instead of an error — the fallback proving itself in production before any reviewer saw it.
@@ -188,8 +193,13 @@ note instead of an error — the fallback proving itself in production before an
 - **Whether a decline is real.** Everfield's note says usage always falls during a seasonal shutdown
   and no prior-year baseline exists; Harbor Retail's decline is store closures. The model penalises
   both. A sentence in a note currently does that job better than any column.
-- **My own labels.** I wrote the ground truth, the paraphrase set and the prompts. Every eval number
-  carries my fingerprints. `eval:cross` is the only one on data I did not author, and it is n=4.
+- **My own labels, and this is the weakest joint in the whole submission.** I wrote the ground truth,
+  the paraphrase sets, the prompts *and* the second-company fixture. Every eval number carries my
+  fingerprints — including `eval:cross`, where I wrote both the notes and the labels. What is true of
+  that run is narrower than "unseen data": nothing in the **system** was tuned for it. Same prompt
+  template, same regexes, same validators, no edits. That is a real property and it is the one I would
+  defend; "data I did not author" would not have been. The fix is somebody else's export and somebody
+  else's labels, and I could not get either in a day.
 
 ---
 
