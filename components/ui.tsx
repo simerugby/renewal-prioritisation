@@ -54,24 +54,32 @@ export function ConfidenceBadge({ level, coverage }: { level: ConfidenceLevel; c
 }
 
 /**
- * A card with a three-level header, because a one-level one stopped working.
+ * The one section container. Every panel on every page is this, which is the
+ * point — the previous page had Cards next to a hand-rolled <section> with its
+ * own header treatment, and two grammars in one column read as neither.
  *
- * Every section used to be a 13px semibold title over a 12px muted sentence, so
- * eight stacked cards read as one undifferentiated column — the titles and the
- * prose inside them were nearly the same size and weight, and nothing told you
- * where a section began.
+ *   eyebrow    10px uppercase, ACCENT-tinted. Names the kind of thing this is,
+ *              and the tint is what makes a card start visibly rather than just
+ *              continue. Muted grey here was invisible.
+ *   title      15px semibold, bigger than any body text under it.
+ *   actions    right-aligned chips in the header, for the rare card that needs
+ *              status next to its name instead of a row of grey metadata.
+ *   footnote   11px, at the BOTTOM, on the card's own fill — NOT on the header
+ *              fill. Using surface-2 top and bottom made every boundary
+ *              ambiguous: you could not tell one card's footer from the next
+ *              card's header, so eight cards looked like one.
  *
- *   eyebrow    10px uppercase, tinted. Names the KIND of thing this is.
- *   title      15px semibold. Readably bigger than any body text on the page.
- *   footnote   11px, at the BOTTOM. Explanations of method belong after the
- *              content, not between the title and it, where they used to push
- *              the actual answer below the fold.
+ * `tone="primary"` is for the single card on a page a reader is meant to act
+ * on. It tints the header rather than adding a new shape, so hierarchy comes
+ * from colour and the grammar stays one grammar.
  */
 export function Card({
   eyebrow,
   title,
   subtitle,
   footnote,
+  actions,
+  tone = 'default',
   children,
   className = '',
 }: {
@@ -79,23 +87,43 @@ export function Card({
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   footnote?: React.ReactNode;
+  actions?: React.ReactNode;
+  tone?: 'default' | 'primary';
   children: React.ReactNode;
   className?: string;
 }) {
+  const primary = tone === 'primary';
   return (
-    <section className={`overflow-hidden rounded-lg border border-border-subtle bg-surface ${className}`}>
+    <section
+      className={`card-lift overflow-hidden rounded-lg border bg-surface ${
+        primary ? 'border-accent/30' : 'border-border-subtle'
+      } ${className}`}
+    >
       {(title || subtitle || eyebrow) && (
-        <header className="border-b border-border-subtle bg-surface-2 px-4 py-3">
-          {eyebrow && (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-2">{eyebrow}</p>
-          )}
-          {title && <h2 className="mt-0.5 text-[15px] font-semibold tracking-tight">{title}</h2>}
+        <header
+          className={`border-b px-4 py-3 ${
+            primary ? 'border-accent/25 bg-accent-soft' : 'border-border-subtle bg-surface-2'
+          }`}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {eyebrow && (
+              <p
+                className={`text-[10px] font-semibold uppercase tracking-[0.07em] ${
+                  primary ? 'text-accent' : 'text-accent/75'
+                }`}
+              >
+                {eyebrow}
+              </p>
+            )}
+            {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
+          </div>
+          {title && <h2 className="mt-1 text-[15px] font-semibold tracking-tight">{title}</h2>}
           {subtitle && <p className="mt-1 text-[12px] leading-relaxed text-muted">{subtitle}</p>}
         </header>
       )}
       <div className="px-4 py-4">{children}</div>
       {footnote && (
-        <footer className="border-t border-border-subtle bg-surface-2 px-4 py-2.5 text-[11px] leading-relaxed text-muted-2">
+        <footer className="border-t border-border-subtle px-4 py-2.5 text-[11px] leading-relaxed text-muted-2">
           {footnote}
         </footer>
       )}

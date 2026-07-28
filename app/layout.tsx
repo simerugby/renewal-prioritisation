@@ -13,6 +13,16 @@ export const metadata: Metadata = {
   title: 'Renewal Prioritisation',
   description:
     'Which customer renewals need attention, why, and what to do next — a transparent scoring model over a portfolio snapshot.',
+  // The Aries mark in black, with a white copy for a dark tab strip — the same
+  // glyph either way, so it never dissolves into the browser chrome.
+  icons: {
+    icon: [
+      { url: '/icon-light.png', media: '(prefers-color-scheme: light)', type: 'image/png' },
+      { url: '/icon-dark.png', media: '(prefers-color-scheme: dark)', type: 'image/png' },
+      { url: '/icon-light.png', type: 'image/png' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -23,7 +33,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="min-h-full flex flex-col">
         <header className="border-b border-border-subtle bg-surface">
-          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2 px-5 py-2.5">
+          {/*
+            Full-bleed rather than on the content grid: the mark belongs in the
+            corner of the window, the way an app's chrome does, not indented to
+            meet the first column of the page.
+          */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5">
             {/*
               A co-brand lockup, not a claim of authorship: the Aries wordmark,
               a hair rule, then the app name. The rule matters — set flush
@@ -31,7 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             */}
             <div className="flex items-center gap-2.5">
               <span
-                className="aries-wordmark text-foreground/85"
+                className="aries-wordmark"
                 role="img"
                 aria-label="Aries Global"
                 title="Case submission for Aries Global"

@@ -41,11 +41,17 @@
   color-scheme: light dark;
 
   /* Surfaces and ink */
-  --background:    light-dark(#fbfbfa, #0d0d0f);
-  --surface:       light-dark(#ffffff, #151517);
-  --surface-2:     light-dark(#f4f4f2, #1d1d20);
-  --border:        light-dark(#e4e4e1, #2a2a2e);
-  --border-strong: light-dark(#d0d0cc, #3a3a40);
+  /*
+    The page was #fbfbfa behind #ffffff cards — 1.5% apart, which is not a
+    boundary, it is a rumour. Eight stacked cards read as one column of text
+    because nothing told the eye where one stopped. The background now sits far
+    enough back that a card looks raised without needing a heavier border.
+  */
+  --background:    light-dark(#f0efec, #0a0a0c);
+  --surface:       light-dark(#ffffff, #17171a);
+  --surface-2:     light-dark(#f6f6f4, #202024);
+  --border:        light-dark(#e0dfda, #2c2c31);
+  --border-strong: light-dark(#c9c8c2, #3d3d43);
   --foreground:    light-dark(#1a1a18, #ededeb);
   --muted:         light-dark(#6b6b66, #9a9a94);
   --muted-2:       light-dark(#8f8f89, #77776f);
@@ -68,7 +74,7 @@
      dark-mode lightness band, so these are their own tokens. See rule 2. */
   --viz-1:    light-dark(#2a78d6, #3987e5);
   --viz-2:    light-dark(#eb6834, #d95926);
-  --viz-grid: light-dark(#e7e7e4, #26262a);
+  --viz-grid: light-dark(#e7e7e4, #2a2a2f);
   --viz-axis: light-dark(#9a9a94, #6b6b64);
 }
 
@@ -161,12 +167,31 @@ body {
 */
 .aries-wordmark {
   display: block;
-  height: 0.95rem;
+  /*
+    "aries" is all x-height — no ascender, no descender — so sizing its box to
+    the title's line box makes it read a third too big and sit low. 11px is the
+    cap height of the 15px title beside it, which is what the eye compares.
+  */
+  height: 11px;
   aspect-ratio: 2.808;
-  background-color: currentColor;
+  background-color: var(--foreground);
+  opacity: 0.9;
   -webkit-mask: url(/aries-wordmark.png) center / contain no-repeat;
   mask: url(/aries-wordmark.png) center / contain no-repeat;
 }
+
+/*
+  One shadow, used only by Card. Light mode gets a real (if quiet) lift; dark
+  mode gets none, because a shadow on a dark surface reads as smudge — there the
+  border does the work.
+*/
+.card-lift {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 1px 8px -4px rgb(0 0 0 / 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .card-lift { box-shadow: none; }
+}
+:root[data-theme="dark"] .card-lift { box-shadow: none; }
 
 :focus-visible {
   outline: 2px solid var(--accent);
