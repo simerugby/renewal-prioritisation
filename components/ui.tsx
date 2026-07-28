@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { ConfidenceLevel, RiskBand } from '@/lib/types';
 
 export const gbp = (n: number) =>
@@ -109,12 +110,41 @@ export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`skeleton rounded ${className}`} aria-hidden />;
 }
 
-export function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
-  return (
-    <div className="min-w-0">
+export function Stat({
+  label,
+  value,
+  hint,
+  href,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  /** When present the figure becomes a link that pre-filters the table below. */
+  href?: string;
+}) {
+  const body = (
+    <>
       <div className="text-[11px] uppercase tracking-wide text-muted-2">{label}</div>
       <div className="tnum mt-0.5 truncate text-[19px] font-semibold tracking-tight">{value}</div>
       {hint && <div className="mt-0.5 text-[11px] leading-snug text-muted">{hint}</div>}
-    </div>
+    </>
+  );
+
+  if (!href) return <div className="min-w-0">{body}</div>;
+
+  // A number a reader wants to interrogate should be the thing they can click.
+  return (
+    <Link
+      href={href}
+      className="group min-w-0 rounded transition-colors hover:bg-surface-2"
+      title="Show these accounts in the table below"
+    >
+      <div className="text-[11px] uppercase tracking-wide text-muted-2">{label}</div>
+      <div className="tnum mt-0.5 truncate text-[19px] font-semibold tracking-tight group-hover:text-accent">
+        {value}
+        <span className="ml-1 align-middle text-[11px] font-normal text-muted-2 group-hover:text-accent">&rarr;</span>
+      </div>
+      {hint && <div className="mt-0.5 text-[11px] leading-snug text-muted">{hint}</div>}
+    </Link>
   );
 }

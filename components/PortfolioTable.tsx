@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { MATERIAL_NOTE_FLAGS } from '@/lib/secondRead';
 import type { ScoredCustomer } from '@/lib/types';
@@ -69,16 +70,33 @@ function RankDelta({ priority, riskOnly }: { priority: number; riskOnly: number 
   );
 }
 
+/**
+ * The headline figures above the table link here with `?view=`, so a number a
+ * reader wants to interrogate is the thing they can click. It also makes a
+ * filtered view a URL someone can send to a colleague.
+ */
+const VIEWS = {
+  soon: { horizon: '30' as const, label: 'renewing within 30 days' },
+  attention: { attention: true, label: 'at elevated risk or worse' },
+  partial: { partial: true, label: 'scored on partial data' },
+  note: { note: true, label: 'calm score, note says otherwise' },
+} as const;
+
 export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
+  const params = useSearchParams();
+  const view = params.get('view') as keyof typeof VIEWS | null;
+  const preset = view && view in VIEWS ? VIEWS[view] : null;
+
   const [query, setQuery] = useState('');
   const [csm, setCsm] = useState('all');
   const [segment, setSegment] = useState('all');
   const [region, setRegion] = useState('all');
   const [stage, setStage] = useState('all');
-  const [horizon, setHorizon] = useState<string>('all');
+  const [horizon, setHorizon] = useState<string>(preset && 'horizon' in preset ? preset.horizon : 'all');
   const [sort, setSort] = useState<SortKey>('priority');
-  const [needsAttentionOnly, setNeedsAttentionOnly] = useState(false);
-  const [noteDisagreesOnly, setNoteDisagreesOnly] = useState(false);
+  const [needsAttentionOnly, setNeedsAttentionOnly] = useState(Boolean(preset && 'attention' in preset));
+  const [noteDisagreesOnly, setNoteDisagreesOnly] = useState(Boolean(preset && 'note' in preset));
+  const [partialOnly, setPartialOnly] = useState(Boolean(preset && 'partial' in preset));
 
   const csms = useMemo(() => uniq(rows.map((r) => r.customer.csmName)), [rows]);
   const segments = useMemo(() => uniq(rows.map((r) => r.customer.segment)), [rows]);
@@ -98,6 +116,7 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
       if (!h.test(r.daysToRenewal)) return false;
       if (needsAttentionOnly && r.riskBand !== 'Critical' && r.riskBand !== 'Elevated') return false;
       if (noteDisagreesOnly && !isQuietButFlagged(r)) return false;
+      if (partialOnly && r.confidence === 'High') return false;
       return true;
     });
 
@@ -117,14 +136,14 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
       }
     });
     return sorted;
-  }, [rows, query, csm, segment, region, stage, horizon, sort, needsAttentionOnly, noteDisagreesOnly]);
+  }, [rows, query, csm, segment, region, stage, horizon, sort, needsAttentionOnly, noteDisagreesOnly, partialOnly]);
 
   const selectClass =
     'rounded border border-border-subtle bg-surface px-2 py-1.5 text-[12px] text-foreground hover:border-border-strong focus:outline-none';
 
   const filteredArr = filtered.reduce((s, r) => s + r.customer.arrGbp, 0);
   const anyFilter =
-    query !== '' || csm !== 'all' || segment !== 'all' || region !== 'all' || stage !== 'all' || horizon !== 'all' || needsAttentionOnly || noteDisagreesOnly;
+    query !== '' || csm !== 'all' || segment !== 'all' || region !== 'all' || stage !== 'all' || horizon !== 'all' || needsAttentionOnly || noteDisagreesOnly || partialOnly;
 
   const reset = () => {
     setQuery('');
@@ -135,10 +154,11 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
     setHorizon('all');
     setNeedsAttentionOnly(false);
     setNoteDisagreesOnly(false);
+    setPartialOnly(false);
   };
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface">
+    <div id="book" className="scroll-mt-4 rounded-lg border border-border-subtle bg-surface">
       <div className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-3 py-2.5">
         <input
           type="search"
@@ -220,6 +240,19 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
           Note disagrees
         </label>
 
+        <label
+          className="flex cursor-pointer items-center gap-1.5 text-[12px] text-muted"
+          title="Accounts where a signal was missing, too stale to use, or contradicted by another."
+        >
+          <input
+            type="checkbox"
+            checked={partialOnly}
+            onChange={(e) => setPartialOnly(e.target.checked)}
+            className="accent-[var(--accent)]"
+          />
+          Partial data
+        </label>
+
         <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={`${selectClass} ml-auto`} aria-label="Sort by">
           <option value="priority">Sort: Priority</option>
           <option value="risk">Sort: Risk score</option>
@@ -296,7 +329,7 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
                       </span>
                     )}
                     <div className="mt-0.5 text-[11px] text-muted-2">
-                      {r.customer.segment} · {r.customer.region} · {r.customer.csmName}
+                      {r.customer.segment} · {r.customer.industry} · {r.customer.region} · {r.customer.csmName}
                     </div>
                   </td>
                   <td className="tnum px-3 py-2.5 align-top">{gbp(r.customer.arrGbp)}</td>

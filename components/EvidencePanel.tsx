@@ -17,36 +17,49 @@ export default function EvidencePanel({ row }: { row: ScoredCustomer }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2.5">
-        {scored.map((s) => {
+      {/*
+        One row per signal, and the row is the unit: the points, the bar and the
+        sentence that produced them sit together with air around them. An earlier
+        version packed these into a two-column grid at 12px throughout, which read
+        as a wall — the numbers were there but nothing invited you to stop on one.
+      */}
+      <ol className="flex flex-col">
+        {scored.map((s, i) => {
           const share = (s.contribution / maxContribution) * 100;
           const inert = s.contribution < 0.5;
           return (
-            <div key={s.key} className="grid grid-cols-[minmax(0,175px)_1fr] items-start gap-x-3 gap-y-1">
-              <div className="flex items-baseline justify-between gap-2">
+            <li
+              key={s.key}
+              className={`py-3 ${i > 0 ? 'border-t border-border-subtle' : 'pt-0'} ${inert ? 'opacity-55' : ''}`}
+            >
+              <div className="flex items-baseline gap-3">
                 <span
-                  className={`text-[12px] font-medium ${inert ? 'text-muted-2' : ''}`}
+                  className="text-[13px] font-medium"
                   title={SIGNAL_RATIONALE[s.key as SignalKey]}
                 >
                   {s.label}
                 </span>
-                <span className={`tnum text-[12px] ${inert ? 'text-muted-2' : 'font-semibold'}`}>
-                  {s.contribution < 0.05 ? '0' : `+${s.contribution.toFixed(1)}`}
+                <span className="tnum ml-auto text-[15px] font-semibold tabular-nums">
+                  {s.contribution < 0.05 ? (
+                    <span className="text-muted-2">0</span>
+                  ) : (
+                    `+${s.contribution.toFixed(1)}`
+                  )}
                 </span>
               </div>
-              <div className="min-w-0">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                  <div
-                    className="h-full rounded-full bg-risk-elevated"
-                    style={{ width: `${Math.max(inert ? 0 : 2, share)}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-[12px] leading-snug text-muted">{s.evidence}</p>
+
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                <div
+                  className="h-full rounded-full bg-risk-elevated"
+                  style={{ width: `${Math.max(inert ? 0 : 2, share)}%` }}
+                />
               </div>
-            </div>
+
+              <p className="mt-2 text-[12px] leading-relaxed text-muted">{s.evidence}</p>
+            </li>
           );
         })}
-      </div>
+      </ol>
 
       {excluded.length > 0 && (
         <div className="rounded border border-dashed border-border-strong px-3 py-2.5">

@@ -32,6 +32,24 @@ const DIRECTION_TONE: Record<string, string> = {
   'adds-nothing': 'text-muted bg-surface-2 border-border-subtle',
 };
 
+/**
+ * Put the findings that carry weight first.
+ *
+ * The model returns them in note order, which on Sterling Aviation meant a panel
+ * headed "Adds risk the score cannot see" opened with "the major incident being
+ * resolved reduces immediate risk" — true, and the least useful sentence there.
+ * Reassurance reads as the headline when it comes first. This is a display
+ * ordering only; nothing is hidden and the clause numbers still point at the
+ * note, so the reader can see the original sequence.
+ */
+const REASSURING = /(resolved|resolving|no immediate|reduces? (the )?risk|mitigat|positive|improv|recover(ed|ing)|strong|healthy|satisf)/i;
+
+function orderFindings<T extends { whatItMeans: string }>(findings: T[]): T[] {
+  return [...findings].sort(
+    (a, b) => Number(REASSURING.test(a.whatItMeans)) - Number(REASSURING.test(b.whatItMeans)),
+  );
+}
+
 export default function SecondRead({
   customerId,
   initial = null,
@@ -126,7 +144,7 @@ export default function SecondRead({
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {result.findings.map((f, i) => (
+          {orderFindings(result.findings).map((f, i) => (
             <li key={i} className="border-l-2 border-border-strong pl-3">
               <blockquote className="text-[12px] leading-relaxed">
                 &ldquo;{f.quote}&rdquo;

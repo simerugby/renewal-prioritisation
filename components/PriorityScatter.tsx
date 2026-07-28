@@ -20,7 +20,7 @@ import { gbp } from './ui';
  */
 
 const W = 720;
-const H = 320;
+const H = 300;
 const M = { top: 16, right: 18, bottom: 38, left: 62 };
 const PLOT_W = W - M.left - M.right;
 const PLOT_H = H - M.top - M.bottom;
@@ -46,10 +46,10 @@ export default function PriorityScatter({ rows }: { rows: ScoredCustomer[] }) {
 
   return (
     <figure className="m-0">
-      <div className="overflow-x-auto">
+      <div className="mx-auto max-w-[860px] overflow-x-auto">
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="h-auto w-full min-w-[560px]"
+          className="h-auto w-full min-w-[520px]"
           role="img"
           aria-label={`Scatter plot of ${rows.length} accounts. Horizontal axis is risk score from 0 to 100; vertical axis is annual recurring revenue up to ${gbp(axisMax)}. The ${HIGHLIGHT_COUNT} highest-priority accounts are highlighted and labelled. The full data is in the table below.`}
         >
@@ -198,7 +198,7 @@ export default function PriorityScatter({ rows }: { rows: ScoredCustomer[] }) {
         </svg>
       </div>
 
-      <figcaption className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted">
+      <figcaption className="mx-auto mt-2 flex max-w-[860px] flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted">
         <span className="flex items-center gap-1.5">
           <span className="inline-block size-2.5 rounded-full" style={{ background: 'var(--viz-2)' }} aria-hidden />
           Top {HIGHLIGHT_COUNT} by priority

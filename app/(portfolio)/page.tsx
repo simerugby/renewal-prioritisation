@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import DataQualityBanner from '@/components/DataQualityBanner';
 import PortfolioTable from '@/components/PortfolioTable';
 import PriorityScatter from '@/components/PriorityScatter';
@@ -70,21 +71,24 @@ export default async function PortfolioPage() {
       <DataQualityBanner issues={portfolio.issues} quarantined={portfolio.quarantined} total={rows.length} />
 
       <div className="grid grid-cols-2 gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3.5 md:grid-cols-4">
-        <Stat label="ARR under management" value={gbp(totalArr)} hint={`${rows.length} accounts`} />
+        <Stat label="ARR under management" value={gbp(totalArr)} hint={`${rows.length} accounts`} href="/?view=all#book" />
         <Stat
           label="Renewing in 30 days"
           value={gbp(soon.reduce((s, r) => s + r.customer.arrGbp, 0))}
           hint={`${soon.length} accounts`}
+          href="/?view=soon#book"
         />
         <Stat
           label="Need attention"
           value={needsAttention.length}
           hint={`${gbp(needsAttention.reduce((s, r) => s + r.customer.arrGbp, 0))} at elevated risk or worse`}
+          href="/?view=attention#book"
         />
         <Stat
           label="Scored on partial data"
           value={lowConfidence.length}
           hint="Signals missing, stale or contradictory"
+          href="/?view=partial#book"
         />
       </div>
 
@@ -217,7 +221,9 @@ export default async function PortfolioPage() {
         <PriorityScatter rows={rows} />
       </Card>
 
-      <PortfolioTable rows={rows} />
+      <Suspense fallback={<div className="skeleton h-64 rounded-lg" aria-hidden />}>
+        <PortfolioTable rows={rows} />
+      </Suspense>
 
       <p className="text-[12px] leading-relaxed text-muted-2">
         The <span className="text-muted">vs risk</span> column shows how far the value-and-urgency weighting
