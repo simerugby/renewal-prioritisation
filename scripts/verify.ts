@@ -139,8 +139,12 @@ async function main() {
   console.log(`  correlation with seat util   ${corr(stick, util).toFixed(2)} — mostly re-measures a signal already scored`);
 
   console.log('contract_term_months');
+  // The column is nullable now, so correlate over the rows that actually have a
+  // term rather than coercing a blank into the series. None are blank in this
+  // file, so the printed figure is unchanged.
+  const withTerm = rows.filter((r) => r.customer.contractTermMonths !== null);
   console.log(
-    `  correlation with ARR         ${corr(rows.map((r) => r.customer.contractTermMonths), rows.map((r) => r.customer.arrGbp)).toFixed(2)} — a proxy for segment, not for risk`,
+    `  correlation with ARR         ${corr(withTerm.map((r) => r.customer.contractTermMonths as number), withTerm.map((r) => r.customer.arrGbp)).toFixed(2)} — a proxy for segment, not for risk (n=${withTerm.length})`,
   );
   for (const t of [12, 24, 36]) {
     const g = rows.filter((r) => r.customer.contractTermMonths === t);

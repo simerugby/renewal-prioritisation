@@ -211,7 +211,7 @@ whole book is held in memory. Tens of thousands of accounts are fine. Millions a
 answer there is to push scoring into the warehouse and serve pre-scored pages, which is the seam
 above, not a rewrite.
 
-**118 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
+**119 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
 the author thought of, which on a 40-row file is a weak claim. `lib/properties.test.ts` uses
 `fast-check` to generate thousands of portfolios per run (unmapped enums, negative ARR, dates
 centuries apart, lone surrogates, empty books, duplicate ids) and asserts invariants that must hold
@@ -253,7 +253,7 @@ npm run sensitivity   # weight perturbation and ablation, fixed seed
 npm run eval          # keyword rules vs model on note detection
 npm run eval:beyond   # the question the product actually asks
 npm run eval:cross    # the same call on a company the system has never seen
-npm test              # 118 tests, including the model-output validators
+npm test              # 119 tests, including the model-output validators
 ```
 
 Every number in the README and in this file is printed by one of the commands above, with two

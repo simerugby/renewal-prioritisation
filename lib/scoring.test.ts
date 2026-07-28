@@ -276,3 +276,24 @@ describe('scoreAll', () => {
     expect(scoreAll([], ASOF)).toEqual([]);
   });
 });
+
+/*
+ * The account page prints "risk x value x urgency = priority". If the rounding
+ * in that line does not multiply out, the one number on the page that invites a
+ * reader to check it by hand is the number that fails the check. These are the
+ * exact precisions the page renders.
+ */
+describe('the priority line the account page prints', () => {
+  it('multiplies out at the precisions shown, for every account', async () => {
+    const { loadPortfolio } = await import('./data');
+    const { SNAPSHOT_DATE } = await import('./config');
+    const { rows } = await loadPortfolio(SNAPSHOT_DATE);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      const shown = Number(
+        (Number(r.riskScore.toFixed(1)) * Number(r.valueWeight.toFixed(2)) * Number(r.urgency.toFixed(2))).toFixed(0),
+      );
+      expect(shown, `${r.customer.customerName} does not reconcile`).toBe(Number(r.priorityScore.toFixed(0)));
+    }
+  });
+});

@@ -28,7 +28,8 @@ export interface Customer {
   csmName: string;
   renewalDate: string;
   arrGbp: number;
-  contractTermMonths: number;
+  /** Null when the column is blank. Never defaulted — see lib/schema.ts. */
+  contractTermMonths: number | null;
   productsOwned: string[];
   seatsPurchased: number;
   activeUsers30d: number;
@@ -41,7 +42,12 @@ export interface Customer {
   invoiceStatus: InvoiceStatus;
   renewalStage: RenewalStage;
   executiveSponsorStatus: SponsorStatus;
-  lastRenewalDiscountPct: number;
+  /**
+   * Null when the column is blank. This one matters most: a blank coerced to 0
+   * would score as *no* discount pressure, the healthiest value on the curve, so
+   * a missing measurement would read as a good one.
+   */
+  lastRenewalDiscountPct: number | null;
   usageDataLastSyncedAt: string;
   npsResponseDate: string | null;
   customerNotes: string;
@@ -99,6 +105,15 @@ export interface ScoredCustomer {
   riskBand: RiskBand;
   /** 0-100 ordering device combining risk, value and urgency. NOT a probability. */
   priorityScore: number;
+  /**
+   * The two multipliers that turn risk into priority, kept so the account page
+   * can show the arithmetic rather than assert the result. priorityScore is
+   * exactly riskScore * valueWeight * urgency.
+   */
+  valueWeight: number;
+  urgency: number;
+  /** The ARR the value weight is measured against: the book's 90th percentile. */
+  arrReference: number;
   priorityRank: number;
   /** Rank this account would hold if we sorted on risk alone. */
   riskOnlyRank: number;

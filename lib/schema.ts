@@ -239,7 +239,10 @@ export function validatePortfolio(records: Record<string, string>[]): Validation
       csmName: r.csm_name?.trim() || 'Unassigned',
       renewalDate: renewalDate!,
       arrGbp: arr!,
-      contractTermMonths: num('contract_term_months') ?? 12,
+      // No `?? 12`. A blank term is not a twelve-month term, and the README
+      // claims blanks are never coerced — that has to be true in the code, not
+      // just true of this particular file.
+      contractTermMonths: num('contract_term_months'),
       productsOwned: r.products_owned ? r.products_owned.split(';').map((s) => s.trim()).filter(Boolean) : [],
       seatsPurchased: seats!,
       activeUsers30d: active!,
@@ -252,7 +255,11 @@ export function validatePortfolio(records: Record<string, string>[]): Validation
       invoiceStatus: enumOf('invoice_status', KNOWN_INVOICE_STATUSES, 'Unknown' as unknown as InvoiceStatus),
       renewalStage: enumOf('renewal_stage', KNOWN_RENEWAL_STAGES, 'Unknown' as unknown as RenewalStage),
       executiveSponsorStatus: enumOf('executive_sponsor_status', KNOWN_SPONSOR_STATUSES, 'Unknown'),
-      lastRenewalDiscountPct: num('last_renewal_discount_pct') ?? 0,
+      // No `?? 0`. Zero is the BEST value on the discount-pressure curve, so
+      // coercing a blank to it scores a missing measurement as a healthy one.
+      // Null instead, and the signal is excluded and re-normalised like a stale
+      // NPS. No row in the supplied file is blank here, so no score moves.
+      lastRenewalDiscountPct: num('last_renewal_discount_pct'),
       usageDataLastSyncedAt: syncedAt!,
       npsResponseDate: date('nps_response_date'),
       customerNotes: r.customer_notes ?? '',

@@ -4,6 +4,7 @@ import SecondRead from '@/components/SecondRead';
 import DecisionRecorder from '@/components/DecisionRecorder';
 import EvidencePanel from '@/components/EvidencePanel';
 import { Card, ConfidenceBadge, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
+import { VALUE_FLOOR } from '@/lib/config';
 import { loadCustomer } from '@/lib/data';
 import { MATERIAL_NOTE_FLAGS } from '@/lib/secondRead';
 import { precomputedSecondRead } from '@/lib/secondReadBatch';
@@ -132,7 +133,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       </div>
 
       <div className="card-lift grid grid-cols-2 gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3.5 md:grid-cols-5">
-        <Stat label="ARR" value={gbp(c.arrGbp)} hint={`${c.contractTermMonths}-month term`} />
+        <Stat label="ARR" value={gbp(c.arrGbp)} hint={c.contractTermMonths === null ? 'term not recorded' : `${c.contractTermMonths}-month term`} />
         <Stat label="Renews" value={c.renewalDate} hint={`${row.daysToRenewal} days from snapshot`} />
         <Stat label="Risk score" value={row.riskScore.toFixed(0)} hint={`${row.riskBand} · out of 100`} />
         <Stat
@@ -155,6 +156,46 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             footnote="Every point traces to one signal and one number in the source file. Disagree with a line rather than with the total — that is what the breakdown is for."
           >
             <EvidencePanel row={row} />
+
+            {/*
+              The brief asks for the evidence behind commercial priority, not
+              just behind risk. Everything above explains the risk number; this
+              is the one line that explains the rank, and it is the whole of the
+              arithmetic — priorityScore is exactly these three multiplied.
+            */}
+            <div className="mt-4 border-t border-border-subtle pt-3.5">
+              <p className="text-[10px] uppercase tracking-wide text-muted-2">
+                And how that became priority #{row.priorityRank}
+              </p>
+              <div className="tnum mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[13px]">
+                <span className="font-semibold">{row.riskScore.toFixed(1)}</span>
+                <span className="text-muted-2">risk</span>
+                <span className="text-muted-2">&times;</span>
+                <span className="font-semibold">{row.valueWeight.toFixed(2)}</span>
+                <span className="text-muted-2">value</span>
+                <span className="text-muted-2">&times;</span>
+                <span className="font-semibold">{row.urgency.toFixed(2)}</span>
+                <span className="text-muted-2">urgency</span>
+                <span className="text-muted-2">=</span>
+                {/*
+                  These precisions are chosen so the line multiplies out. At one
+                  decimal on the product, the rounding in the factors put 15 of
+                  the 40 accounts out by 0.1 — a reader checking the arithmetic
+                  by hand would have found the app disagreeing with itself.
+                  `lib/scoring.test.ts` asserts all 40 reconcile.
+                */}
+                <span className="font-semibold">{row.priorityScore.toFixed(0)}</span>
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                Value is {gbp(c.arrGbp)} measured against the book&rsquo;s 90th percentile of{' '}
+                {gbp(row.arrReference)}, on a floor of {VALUE_FLOOR} so a small account in real trouble
+                stays visible instead of being ranked out of existence by ARR. Urgency is{' '}
+                {row.daysToRenewal} days to renewal.{' '}
+                {row.riskOnlyRank === row.priorityRank
+                  ? 'Here the two axes agree.'
+                  : `On risk alone this would be #${row.riskOnlyRank}; the difference is what the other two multipliers are for.`}
+              </p>
+            </div>
           </Card>
 
           <Card

@@ -41,7 +41,7 @@ const arbCustomer: fc.Arbitrary<Customer> = fc.record({
     .date({ min: new Date('2020-01-01'), max: new Date('2035-12-31'), noInvalidDate: true })
     .map((d) => d.toISOString().slice(0, 10)),
   arrGbp: fc.oneof(fc.integer({ min: -50_000, max: 50_000_000 }), fc.constant(0)),
-  contractTermMonths: fc.integer({ min: 0, max: 120 }),
+  contractTermMonths: fc.option(fc.integer({ min: 0, max: 120 }), { nil: null }),
   productsOwned: fc.array(fc.string({ maxLength: 20 }), { maxLength: 6 }),
   seatsPurchased: fc.integer({ min: 0, max: 1_000_000 }),
   activeUsers30d: fc.integer({ min: 0, max: 1_000_000 }),
@@ -61,7 +61,7 @@ const arbCustomer: fc.Arbitrary<Customer> = fc.record({
     'Awaiting legal' as never,
   ),
   executiveSponsorStatus: fc.constantFrom('Active', 'Inactive', 'Unknown', 'Left company', 'Retired' as never),
-  lastRenewalDiscountPct: fc.integer({ min: -20, max: 200 }),
+  lastRenewalDiscountPct: fc.option(fc.integer({ min: -20, max: 200 }), { nil: null }),
   usageDataLastSyncedAt: fc
     .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31'), noInvalidDate: true })
     .map((d) => d.toISOString().slice(0, 10)),

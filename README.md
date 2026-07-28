@@ -39,7 +39,7 @@ model output, and to a keyword scanner below that, and says on screen which one 
 | `npm run verify` | Prints the ranking and every figure quoted in these two documents. |
 | `npm run sensitivity` | Perturbs the weights 1,000 times to test whether the ranking survives them. |
 | `npm run eval` / `eval:beyond` / `eval:cross` | The three measurements behind the AI decision. |
-| `npm test` | 118 tests: unit, property-based, a second company's export, model-output validation. |
+| `npm test` | 119 tests: unit, property-based, a second company's export, model-output validation. |
 | `npm run smoke` | End-to-end against a running server: status codes, content, AI failure paths. |
 | `npm run check` | Typecheck, lint, tests, secret scan, verification. |
 
@@ -333,5 +333,9 @@ Next.js 16 (App Router), TypeScript, Tailwind v4, OpenAI SDK. Deployed on Vercel
 auth, no client state library — the data is a static snapshot and the app is honest about that.
 
 Every date counts from the stated snapshot, shown in the header on every page. Blank means *not
-recorded* and is never coerced to zero: a missing value scoring as a real measurement is the failure
-mode this dataset is built to catch.
+recorded* and is never coerced to a default. The sharp case is `last_renewal_discount_pct`: zero is
+the healthiest point on that curve, so reading a blank as 0% would let a missing measurement improve
+an account's score. A blank excludes the signal and re-normalises the rest, exactly as a 238-day-old
+NPS does. No row in the supplied file is blank in either column, so this changes no number here — it
+is in the code because the next company's export will not be so tidy, and `lib/properties.test.ts`
+generates blanks to prove it.

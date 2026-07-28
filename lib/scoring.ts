@@ -237,11 +237,24 @@ function computeSignals(
   }
 
   // --- Prior discount pressure ---------------------------------------------
-  push(
-    'discountPressure',
-    band(c.lastRenewalDiscountPct, CURVES.discountPressure),
-    `Last renewal closed at a ${c.lastRenewalDiscountPct}% discount.`,
-  );
+  // A blank is excluded, not read as 0%. Zero is the healthiest point on this
+  // curve, so defaulting to it would let a missing number improve an account's
+  // score — the same mistake as averaging in a 238-day-old NPS, in the other
+  // direction.
+  if (c.lastRenewalDiscountPct === null) {
+    push(
+      'discountPressure',
+      null,
+      'No prior discount recorded.',
+      'The column is blank, and a blank is not a zero-discount renewal.',
+    );
+  } else {
+    push(
+      'discountPressure',
+      band(c.lastRenewalDiscountPct, CURVES.discountPressure),
+      `Last renewal closed at a ${c.lastRenewalDiscountPct}% discount.`,
+    );
+  }
 
   return out;
 }
@@ -430,6 +443,9 @@ export function scoreCustomer(
     riskScore,
     riskBand,
     priorityScore,
+    valueWeight,
+    urgency,
+    arrReference: ctx.arrReference,
     signals,
     confidence,
     modelCoverage,
