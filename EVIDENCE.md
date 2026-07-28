@@ -4,7 +4,11 @@ Supporting material for [README.md](README.md), which answers the questions you 
 the working underneath: the measurements, the methodology, and the places where testing my own
 assumptions changed my mind. Nothing here is required reading — the README stands on its own.
 
-Every figure reproduces from a command, except two recall figures flagged where they appear.
+Every figure here reproduces from a command, with the exceptions named where they appear: the two
+recall figures from prompt versions no longer in the repo, the two stickiness correlations below, and
+the rejection counts from the first Second Read batch — all computed over the file or recorded from
+runs whose code is gone, none of them printed by anything. Worth knowing before you run any of it: the
+rules columns of every eval run without a key, and the model columns need `OPENAI_API_KEY`.
 `npm run verify`, `npm run sensitivity`, `npm run eval`, `npm run eval:beyond`, `npm run eval:cross`.
 
 ---
@@ -61,8 +65,9 @@ the data under any weighting, and Oakwell's position inside it is a property of 
 Worth saying plainly, because straight expected loss — risk × ARR × urgency, no floor and no clamp — is
 a defensible ranking and it is not this one. It puts Oakwell at #20: the highest-risk account in the
 book, renewing in 13 days, ranked below nineteen accounts in better shape because it is worth £12,000.
-It also promotes Sterling Aviation #14 → #7 and Quantum Public Sector #15 → #8, both of which the
-note-risk triage list surfaces independently. The floor is a commercial judgement about how much a small
+It also promotes Sterling Aviation #14 → #7, Quantum Public Sector #15 → #8 and Aurora Marine #11 → #9.
+The first two the note-risk triage list surfaces independently, which is the mitigation. Aurora it does
+not, and that is the honest half of the same result. The floor is a commercial judgement about how much a small
 account is allowed to matter, and I would want an operator to argue with it rather than inherit it.
 
 ---
@@ -73,12 +78,15 @@ The file has 25 columns. Nine are scored, several are identity or filters, and t
 deliberately left out. Leaving a column unused is a decision, so each one has a measurement behind it
 rather than an oversight.
 
-**`weekly_active_users_30d` — excluded for lack of variance and collinearity.** As a stickiness ratio
-(weekly ÷ monthly actives) it looks promising, and it correlates −0.64 with the risk score. That
-correlation is the reason to exclude it, not to include it: it is 0.70 correlated with seat
-utilisation and 0.59 with adoption trend, both of which are already scored, so it mostly re-measures
-them. And across the whole book it ranges **56% to 69%** — a 14-point spread. A signal that barely
-varies cannot separate accounts; it would add weight without adding information.
+**`weekly_active_users_30d` — excluded because it barely varies.** As a stickiness ratio (weekly ÷
+monthly actives) it looks promising, and it correlates −0.64 with the risk score. But across the whole
+book it ranges **55.6% to 69.5%**, a 13.9-point spread. A signal that barely varies cannot separate
+accounts; it would add weight without adding information. It is also 0.70 correlated with seat
+utilisation and 0.59 with adoption trend, and I am not going to lean on that, because those two are
+0.94 correlated with each other and both read `active_users_30d` — 30 of the 100 points already measure
+one column twice. That is deliberate, since direction and depth answer different questions and I capped
+the pair at 30 combined, but it means the honest reason to drop stickiness is the variance, not the
+overlap.
 
 **`contract_term_months` — excluded because it is a proxy for segment, not for risk.** The raw pattern
 is striking: mean risk 35.1 on 12-month terms, 15.7 on 24-month, 11.7 on 36-month. It is also
@@ -90,8 +98,16 @@ penalise every SMB for being an SMB. That is a bias wearing a signal's clothes.
 26.4 on two, which is noise. Three-product accounts average 13.2, but there are only three of them.
 Multi-product stickiness is a real effect in general; this book is too small to show it.
 
-**One thing the audit did turn up in the model's favour.** The risk distribution is bimodal, with a
-clean gap: twelve accounts score 45 or above, then nothing until 36. The Elevated threshold sits at 45,
+**`csm_name` — used as a table filter and nothing else, and it is the largest thing left on the table.**
+Aisha Khan holds priority #1, #2, #4, #5 and #7: £637,000 across five accounts, four of them renewing
+inside 32 days. Ben Carter's whole book of eight starts at #18. Nothing in the product says that. The
+question a head of CS asks after "which renewals need attention" is whether the person who owns them
+has the week, and grouping the priority list by CSM is a `groupBy` and a count. I built the CSM's view
+because that is what the brief asked for; the manager's view is one screen away and it is the first
+thing I would add for a second user.
+
+**One thing the audit did turn up in the model's favour.** The risk distribution has a clean gap
+exactly where the Elevated threshold sits: twelve accounts score 45 or above, then nothing until 36. The Elevated threshold sits at 45,
 which lands on that break rather than cutting through a cluster. The "needs attention" set is a real
 group in the data, not an artefact of where I put a line.
 
@@ -177,8 +193,14 @@ clean one.
 
 This is a snapshot of 40 rows. Everything below exists because the next file will not be.
 
-**Nothing is tuned to this file's contents.** The scoring engine (`lib/scoring.ts`) contains no
-numbers at all. Every weight, threshold and staleness limit lives in `lib/config.ts`. The value
+**Nothing in the score is tuned to this file's contents.** Every weight, threshold, curve and staleness
+limit the score uses lives in `lib/config.ts`; `lib/scoring.ts` holds the logic and the two scale
+constants it needs, a 0-100 rescale and a day in milliseconds. The next-action table is the exception
+and it is worth naming rather than hiding: seven cut-offs are written into `lib/playbook.ts` — 35, 60
+and 90 days to renewal, 0.65 and 0.6 on two signal curves, two critical tickets, half a range in the
+default — and 7 of its 17 rules fire off the keyword scanner, the least portable component in the repo.
+That file is meant to be rewritten per company, so today that means editing code rather than config.
+Lifting its numbers into `config.ts` is an hour I did not spend. The value
 reference is derived from the portfolio's ARR distribution at load time; an earlier version had
 `ARR_REFERENCE = 260_000` hard-coded to this book's largest account, which would have flattened the
 value axis on any book with a bigger one. Urgency extends past a year rather than clamping at this
@@ -193,8 +215,9 @@ It does *not* fall through to "Current". That was a real bug in the first versio
 app with a message naming the column. A single row with a malformed date is quarantined and the other
 39 still load. Both surface in the product rather than in a log.
 
-**The data source is swappable.** `PortfolioSource` in `lib/data.ts` is a two-method interface. A
-warehouse query, an HTTP export or a CRM API is a new implementation and nothing else changes.
+**The data source is swappable.** `PortfolioSource` in `lib/data.ts` is a name and one method,
+`load()`, returning raw records and any structural issues together. A warehouse query, an HTTP export
+or a CRM API is a new implementation and nothing else changes.
 `listPortfolio` already takes the paging arguments a server-side source would need, and account pages
 render per request rather than being pre-generated, so build time does not grow with the size of the
 book.
@@ -237,7 +260,7 @@ It also asserts the promise that **fails**: the note scanner does not recognise 
 retiring in sept"* as a sponsor loss. That limitation is now a test, so it cannot quietly stop being
 true.
 
-`npm run check` runs typecheck, lint, tests and the verification harness together.
+`npm run check` runs typecheck, lint, tests, the secret scan and the verification harness together.
 
 **What does not port** is the keyword scanner. Finding 5 measured exactly how badly (7%), and that is
 the honest boundary between the part of this that is a system and the part that is a transcription of
@@ -256,8 +279,9 @@ npm run eval:cross    # the same call on a company the system has never seen
 npm test              # 119 tests, including the model-output validators
 ```
 
-Every number in the README and in this file is printed by one of the commands above, with two
-exceptions: the 25% and 96% recalls of the two discarded prompt versions. Both were recorded from
+Every number in the README and in this file is printed by one of the commands above, with the
+exceptions listed at the top of this file: the 25% and 96% recalls of the two discarded prompt versions,
+the two stickiness correlations, and the first batch's rejection counts. Both were recorded from
 runs I cannot reproduce, because neither prompt is still in the repo. They are in the document
 because the tuning history is the caveat — but they are the only two figures here you have to take
 on trust, and you should read them as the range I searched rather than as measurements of anything

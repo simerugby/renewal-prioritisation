@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
-  <img src="docs/banner-light.png" alt="Renewal Prioritisation — a case submission for Aries Global. 40 accounts, £4,431,000 ARR, snapshot 2026-07-21. A scatter of the scored book plots risk against ARR: the highest-risk account is worth £12,000 and the highest-priority one is worth £210,000.">
-</picture>
+<img src="docs/banner-light.png" alt="Renewal Prioritisation — a case submission for Aries Global. 40 accounts, £4,431,000 ARR, snapshot 2026-07-21. A scatter of the scored book plots risk against ARR: the highest-risk account is worth £12,000 and the highest-priority one is worth £210,000.">
 
 # Renewal Prioritisation
 
@@ -17,38 +14,6 @@ Working and measurements behind the decisions here: **[EVIDENCE.md](EVIDENCE.md)
 
 ---
 
-## Setup
-
-```bash
-npm install
-npm run dev            # http://localhost:3000
-```
-
-Optional, for the one AI feature:
-
-```bash
-cp .env.example .env.local     # then add OPENAI_API_KEY
-```
-
-**The app is fully functional without a key.** Scores, evidence, rankings, the triage list and the
-suggested actions are all computed in code. The AI feature falls back to a committed batch of real
-model output, and to a keyword scanner below that, and says on screen which one you are seeing.
-
-| command | what it does |
-|---|---|
-| `npm run verify` | Prints the ranking and every figure quoted in these two documents. |
-| `npm run sensitivity` | Perturbs the weights 1,000 times to test whether the ranking survives them. |
-| `npm run eval` / `eval:beyond` / `eval:cross` | The three measurements behind the AI decision. |
-| `npm test` | 119 tests: unit, property-based, a second company's export, model-output validation. |
-| `npm run smoke` | End-to-end against a running server: status codes, content, AI failure paths. |
-| `npm run check` | Typecheck, lint, tests, secret scan, verification. |
-
-**Try it on a different book.** [`/try`](https://renewal-prioritisation.vercel.app/try) runs a CSV you
-drop in through the same parser, validator and scoring engine, in your browser — nothing uploaded,
-nothing stored. The portability claims below are checkable there rather than only in a test file.
-
----
-
 ## Who I would prioritise first
 
 **Northstar Logistics.** £210,000, renewing in 18 days, and the only account where every axis agrees.
@@ -59,6 +24,13 @@ behind a £12,000 account in even worse shape that should still not be the first
 Then Meridian Health Systems (£180k, usage −38%, four critical tickets), Lantern Hospitality (£68k,
 has asked for a cancellation clause), Atlas Manufacturing (£140k, caught in a vendor consolidation),
 and Oakwell Design (£12k, the most distressed account in the book).
+
+Every account also carries a suggested next action, picked by a 17-rule decision table
+(`lib/playbook.ts`) rather than by a model, with the rule that fired named on the page: 7 accounts on
+*Today*, 15 on *This week*. First match wins, and on Northstar that ordering is wrong — the disputed
+invoice outranks the dead renewal process, so the action reads *resolve the billing dispute* on an
+account whose cheapest problem is that nobody has opened the conversation with 18 days left. An
+account with five things wrong at once should render every rule that fired, not the first.
 
 ---
 
@@ -80,10 +52,18 @@ emergency at 18.
 since contact, champion gone. It is worth £12,000. **Northstar** has the same pathology at **17.5×**
 the value.
 
-A single blended health score sends the CSM to Oakwell. So the app computes two axes and never merges
-them: **risk** (is this account in trouble) and **value at stake** (ARR weighted by how soon it
-renews). Oakwell falls to **priority #5** — still visible, no longer first. The table shows the
-movement in a `vs risk` column; the scatter shows it in one glance.
+A single blended health score sends the CSM to Oakwell. So the app keeps two numbers on the page and
+never collapses them into one health score. **Risk** asks whether the account is in trouble.
+**Priority** is that risk multiplied by value at stake — ARR against the book's 90th percentile — and
+by how soon the renewal lands. Risk stays beside it in a `vs risk` column so you can always see what
+the multiplication did to it; the scatter shows the same thing in one glance.
+
+Oakwell falls to **priority #5** — still visible, no longer first. That position is a judgement rather
+than a fact: a value floor of 0.45 in `lib/config.ts` decides how much a small account is allowed to
+matter, and jittering it ±40% moves Oakwell between #2 and #6. Straight expected loss — risk × ARR ×
+urgency, no floor — is a defensible ranking and it puts Oakwell at #20, below nineteen accounts in
+better shape, thirteen days from renewal. I would want an operator to argue with that floor rather
+than inherit it. `npm run sensitivity` sweeps it end to end.
 
 The value reference is the portfolio's 90th percentile of ARR, derived at load time rather than
 hard-coded, so the model behaves sensibly on a book of £20k SMBs and a book of £5m enterprises alike.
@@ -92,8 +72,8 @@ hard-coded, so the model behaves sensibly on a book of £20k SMBs and a book of 
 
 | | |
 |---|---|
-| Accounts with no NPS at all | 3 |
-| Of the 37 with one, older than a week | **36** |
+| Accounts with no usable NPS (two blank, one undated) | 3 |
+| Of the 37 dated responses, older than a week | **36** |
 | Median age | **43 days** · oldest **238** |
 | Accounts with usage data over a week stale | **4** (median sync age: 1 day) |
 
@@ -113,8 +93,9 @@ excluded and named on the page.
 
 The same rule applies to usage. **Stonebridge Education** (£95,000, renewing in 25 days) last synced
 33 days before the snapshot, so its "last 30 days" figures describe a window that closed a month
-earlier. Both usage signals are excluded, it is scored on **51% of the model**, and the app says so
-rather than presenting a confident 46.
+earlier. Both usage signals are excluded on that basis, and its engagement date and NPS are blank in the
+source, so four of the nine signals carry no weight and it is scored on **51% of the model**. The app
+shows 46.2 with that coverage figure and a Low confidence beside it rather than a bare 46.
 
 ### 4. "Verbal commitment" is not a safe stage — three of four are stuck on money
 
@@ -130,8 +111,11 @@ Greenway reads as healthy on every behavioural signal — NPS 61, usage up 8% �
 unsigned and finance disputes a services charge.
 
 The app does not resolve this. Picking a side invents a fact, and either record could be the stale one.
-It flags the contradiction, **lowers confidence, leaves the risk score alone**, and puts both records
-side by side so a human can settle it with one call.
+It flags the contradiction and lowers confidence, and the score itself takes both records at face value
+at once: full credit for the verbal commitment, full penalty for the disputed invoice, which is 12.6 of
+Greenway's 13.5 points. That is why it reads 13.5 with a contradiction beside it rather than a higher
+number with the disagreement buried inside it, and why both records are printed side by side for a
+human to settle with one call.
 
 ### 5. The rules I wrote score 95% here and 7% when the wording changes
 
@@ -146,22 +130,30 @@ here" is an assertion until tested. It caught **36 of 38** hand-labelled note ri
 on the two notes I labelled as carrying no extra risk — which looked like an argument for deleting the
 API call. Read the second half narrowly: those two notes are the only ones the eval can record a false
 positive on, so it never scores the extra flags that six of the other 38 accounts also carry. `npm run
-verify` now prints those six, and one was wrong — Atlas Manufacturing's note names an internal owner and
-the scanner still tagged it "Blocker with no named owner", which is why that label now reads "Unowned or
-undecided blocker". The 36 of 38 is contaminated too: **I
+verify` now prints those six, and one label was imprecise — Atlas Manufacturing's note says an internal
+owner exists and has not decided which tools stay, which is an undecided blocker rather than an unowned
+one, which is why that label now reads "Unowned or undecided blocker". The 36 of 38 is contaminated too: **I
 wrote those regexes after reading all forty notes.** So I rewrote 14 of the same facts as another team
 would phrase them and re-ran:
 
-| Detected the risk in the note | supplied notes | same facts, reworded | a book never seen |
+| Detected the risk in the note | supplied notes (n=38) | same facts, reworded (n=14) | a book never seen (n=4) |
 |---|---|---|---|
 | Keyword rules | **95%** | **7%** | **1 of 4** |
 | `gpt-4.1-nano` | 92% | **93%** | **3 of 4** |
 
+Read the middle column the way you read the first. I wrote those 14 paraphrases knowing what the
+regexes match on, so that set is biased against the rules exactly as the supplied notes are biased for
+them; `npm run eval` prints that warning above its own output. The two rows are also not the same
+measurement: the rules column asks whether the scanner produced the *right category*, the model column
+only whether it flagged the note at all. On exact category the model scores 45%, which is why it
+categorises nothing in the shipped product and only decides whether a note is worth reading. That
+distinction changes nothing on the reworded set — the rules raise no flag of any kind on 13 of the 14.
+Neither end of this table is a measurement. The gap between them is.
+
 The third column comes from a second company's export with notes in a different register (*"practice
 manager retiring in sept, no handover planned yet"*). Read it carefully: **I wrote that fixture and
 its labels**, so it is not unseen data. What it does show is that nothing in the *system* was adjusted
-for it — same prompt template, same regexes, same validators. That is a weaker claim than it first
-looks, and stating it precisely matters more here than anywhere else in this document.
+for it — same prompt template, same regexes, same validators.
 
 **Said plainly: on the forty notes you supplied the rules beat the model, and if this file were the
 whole world I would delete the API call.** It earns its place because company number eleven writes its
@@ -177,13 +169,13 @@ Full methodology, including where my own measurements were wrong twice, is in
 | Decision | Why | What I gave up |
 |---|---|---|
 | **A transparent rubric, not a fitted model** | No historical renewal outcomes exist in this file. Nothing to fit, nothing to validate. A model here would be a confident number with no evidence under it — which is the brief's own point about churn probabilities. | Any claim to predictive accuracy. In exchange every point is inspectable. |
-| **Two axes, never blended** | "Risk *and* commercial priority" is two questions. Finding 2 is what happens when you answer both with one number. | Two numbers to explain. The `vs risk` column pays that cost. |
+| **Risk and priority both stay on the page** | "Risk *and* commercial priority" is two questions. Priority does multiply risk by value and urgency; what it must not do is replace risk with a single health score. Finding 2 is what happens when one number answers both. | Two numbers to explain. The `vs risk` column pays that cost. |
 | **Confidence as a third, separate output** | Folding staleness into the score silently converts a guess into a measurement. | Users read two things. It is the only treatment of stale data that does not quietly lie. |
 | **Stale signals dropped, model re-normalised** | A 238-day-old NPS is not evidence about today, and neither is a usage window that closed a month ago. | An account on 51% of the model is not strictly comparable to one on 100%. That figure is therefore shown. |
 | **Contradictions lower confidence, never risk** | Resolving them silently, in either direction, invents a fact. | The app declines to answer the hardest cases. That *is* the answer. |
 | **Next action by decision table, not by model** | Routing attention is a small, knowable answer space. A rule can be read and argued with. | Less fluent phrasing than a model would produce. |
 | **One LLM call, and it cannot move a number** | The score is computed server-side and never reaches the prompt — not the number, not the band, not the rank — so the model reads the note independently rather than reasoning toward a total it has already been shown. | The insight is ignorable. Correct: an unreproducible output must not reorder a work queue. |
-| **The triage list stays deterministic** | Measured, not assumed. The rules select 9 accounts at 71% precision; the model, at the recall needed to catch Quantum, flags 19 of 28 calm accounts. A list of 19 is not a list. | The model's better recall. It reads the note instead. |
+| **The triage list stays deterministic** | Measured, not assumed. Across the whole book the rules run at 71% precision and 48% recall, the model at 67% and 80%; applied to the 28 calm accounts the rules select 9 and the model 19, and a list of 19 is not a list. Both catch Quantum on this file — the rules by matching "no replacement", which is this company's phrasing rather than a general one, and that is the whole difference between them. | The model's better recall. It reads the note instead. |
 | **Everything anchors to the stated 2026-07-21 snapshot** | Using `new Date()` would make "18 days to renewal" drift daily and no figure here would reproduce. | The app is not live. It is honest about being a snapshot. |
 
 **On cost.** One call per account, on demand — never on page load, never looped over the portfolio.
@@ -203,7 +195,7 @@ has the counts.
 
 ---
 
-## What could change these decisions
+## What could change these decisions, and what I would ask in week one
 
 - **Historical renewal outcomes.** The single input that would change the most. With two years of
   labelled outcomes I would fit a model, keep the rubric as the explanation layer, and finally know
@@ -216,9 +208,23 @@ has the counts.
   progression. If a company uses them as unordered categories, that signal is meaningless.
 - **What counts as engagement.** If a CRM logs email but not calls, silence is overstated and that
   signal inflates risk across the whole book.
-- **Whether a decline is real.** Everfield's note says usage always falls during a seasonal shutdown
-  and no prior-year baseline exists; Harbor Retail's decline is store closures. The model penalises
-  both. A sentence in a note currently does that job better than any column.
+- **When the customer can actually leave.** The file has a renewal date and a contract term, and no
+  notice period, no auto-renewal flag and no opt-out date. In most B2B contracts the deadline that
+  matters is the notice deadline, 30 to 90 days ahead of the renewal, and it inverts the picture: if
+  Northstar's 12-month contract carries 30 days' notice, the window to cancel closed twelve days before
+  this snapshot and the conversation is about terms rather than survival. It also separates the
+  motions — an auto-renewing 36-month contract needs a different play from a live annual negotiation,
+  and today they sort together. I ranked on the renewal date because it is what I was given, and this
+  is the assumption I would test first.
+- **Whether a decline is real, and what the decision table does with it.** Everfield's note says usage
+  always falls during a seasonal shutdown and no prior-year baseline exists; Harbor Retail's decline is
+  store closures. The model penalises both, and it shows in the actions: eight of the top thirteen
+  accounts get the same suggested play — *run a usage review* — and all eight notes already name the
+  cause, from store closures at Harbor to a finished project at Ember to a competitor trial at
+  Rivermark. That rule's own rationale says the difference between a fixable deployment problem and a
+  decision taken elsewhere is worth one call; on these eight the note has already made that call and
+  the rule does not read it. Splitting the usage rule by cause is six more rows in the table, not a
+  model, and it is the first thing I would add.
 - **My own labels, and this is the weakest joint in the whole submission.** I wrote the ground truth,
   the paraphrase sets, the prompts *and* the second-company fixture. Every eval number carries my
   fingerprints — including `eval:cross`, where I wrote both the notes and the labels. What is true of
@@ -324,6 +330,38 @@ built to make that opinion easy to inspect and easy to argue with rather than ea
 
 That test needs the one thing this does not yet do: **keep its own history.** Snapshotting every score
 weekly is a small deterministic change, and it is the first thing I would build.
+
+---
+
+## Running it, and checking every number above
+
+```bash
+npm install
+npm run dev            # http://localhost:3000
+```
+
+Optional, for the one AI feature:
+
+```bash
+cp .env.example .env.local     # then add OPENAI_API_KEY
+```
+
+**The app is fully functional without a key.** Scores, evidence, rankings, the triage list and the
+suggested actions are all computed in code. The AI feature falls back to a committed batch of real
+model output, and to a keyword scanner below that, and says on screen which one you are seeing.
+
+| command | what it does |
+|---|---|
+| `npm run verify` | Prints the ranking and every figure quoted in these two documents. |
+| `npm run sensitivity` | Perturbs the weights 1,000 times to test whether the ranking survives them. |
+| `npm run eval` / `eval:beyond` / `eval:cross` | The three measurements behind the AI decision. |
+| `npm test` | 119 tests: unit, property-based, a second company's export, model-output validation. |
+| `npm run smoke` | End-to-end against a running server: status codes, content, AI failure paths. |
+| `npm run check` | Typecheck, lint, tests, secret scan, verification. |
+
+**Try it on a different book.** [`/try`](https://renewal-prioritisation.vercel.app/try) runs a CSV you
+drop in through the same parser, validator and scoring engine, in your browser — nothing uploaded,
+nothing stored. The portability claims above are checkable there rather than only in a test file.
 
 ---
 

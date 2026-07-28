@@ -3,7 +3,7 @@
  *
  * Everything in this file is a judgement about *this* portfolio: what the
  * columns are called, what counts as stale, how much each signal is worth. The
- * scoring engine in `scoring.ts` contains no numbers at all — drop a different
+ * scoring engine in `scoring.ts` holds no tuned constants — drop a different
  * B2B SaaS book in and you rewrite this file, not the engine.
  *
  * Every weight below is a considered guess, not a fitted parameter. There are no

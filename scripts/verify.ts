@@ -134,7 +134,7 @@ async function main() {
   const util = withWau.map((r) => r.customer.activeUsers30d / r.customer.seatsPurchased);
   console.log('weekly_active_users_30d, as stickiness (weekly / monthly actives)');
   console.log(
-    `  spread across the book       ${(Math.min(...stick) * 100).toFixed(0)}% to ${(Math.max(...stick) * 100).toFixed(0)}%  (${((Math.max(...stick) - Math.min(...stick)) * 100).toFixed(0)} points)`,
+    `  spread across the book       ${(Math.min(...stick) * 100).toFixed(1)}% to ${(Math.max(...stick) * 100).toFixed(1)}%  (${((Math.max(...stick) - Math.min(...stick)) * 100).toFixed(1)} points)`,
   );
   console.log(`  correlation with seat util   ${corr(stick, util).toFixed(2)} — mostly re-measures a signal already scored`);
 

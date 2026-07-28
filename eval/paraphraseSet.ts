@@ -1,8 +1,8 @@
 /**
- * THE HELD-OUT SET — and the reason the 92% figure from the in-corpus eval
+ * THE HELD-OUT SET — and the reason the 95% figure from the in-corpus eval
  * cannot be taken at face value.
  *
- * The rule scanner in `lib/noteScan.ts` catches 35 of 38 hand-labelled note
+ * The rule scanner in `lib/noteScan.ts` catches 36 of 38 hand-labelled note
  * risks in the supplied file. That number is contaminated, and I would rather
  * say so than quote it: I wrote those regular expressions *after* reading all
  * forty notes. Scoring them on the same notes measures how well I transcribed a

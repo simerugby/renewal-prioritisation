@@ -3,7 +3,7 @@
  *
  * The live app is public and, once a key is configured, that key is somebody
  * else's. Everything else on this endpoint bounds cost per call — small model,
- * 400-token cap, per-account cache — but nothing bounded the *number* of calls a
+ * 600-token cap, per-account cache — but nothing bounded the *number* of calls a
  * stranger could make. This does.
  *
  * In-memory and therefore per-instance: on serverless the real ceiling is this
