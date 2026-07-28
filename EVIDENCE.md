@@ -74,8 +74,8 @@ account is allowed to matter, and I would want an operator to argue with it rath
 
 ## Three columns I did not score, and the evidence for each
 
-The file has 25 columns. Nine are scored, several are identity or filters, and three carry numbers I
-deliberately left out. Leaving a column unused is a decision, so each one has a measurement behind it
+The file has 25 columns. Nine signals are scored, built from fourteen of them; several more are
+identity or filters; and three carry numbers I deliberately left out. Leaving a column unused is a decision, so each one has a measurement behind it
 rather than an oversight.
 
 **`weekly_active_users_30d`, excluded because it barely varies.** As a stickiness ratio (weekly ÷

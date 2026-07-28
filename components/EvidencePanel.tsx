@@ -80,7 +80,7 @@ export default function EvidencePanel({ row }: { row: ScoredCustomer }) {
 
       <p className="text-[11px] leading-relaxed text-muted-2">
         {Math.round(row.modelCoverage * 100)}% of the model&rsquo;s total weight could be applied to this
-        account. Points shown sum to the risk score of {row.riskScore.toFixed(0)}.
+        account. Points shown sum to the risk score of {row.riskScore.toFixed(1)}.
       </p>
     </div>
   );

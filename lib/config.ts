@@ -62,7 +62,7 @@ export const SIGNAL_RATIONALE: Record<SignalKey, string> = {
   stageReadiness:
     'A renewal 18 days out that has not started is a process failure you can still fix. Compares stage reached against days remaining.',
   engagementRecency:
-    'Silence is a signal. Long gaps precede surprises, and unlike sentiment it is recorded for every account.',
+    'Silence is a signal. Long gaps precede surprises, and it is recorded for 39 of the 40 accounts, against 37 for sentiment.',
   seatUtilisation:
     'Distinguishes a small account using everything it bought from a large one that never deployed.',
   sponsorStatus:
@@ -72,7 +72,7 @@ export const SIGNAL_RATIONALE: Record<SignalKey, string> = {
   supportStrain:
     'Weighted toward critical tickets and normalised per 100 seats, so a large account is not penalised for having more users.',
   sentiment:
-    'Deliberately the second-lightest weight. NPS is the most-quoted CS metric and the least trustworthy column in this file: 3 accounts have no response at all, and 36 of the 37 that do are more than a week old.',
+    'Deliberately the second-lightest weight. NPS is the most-quoted CS metric and the least trustworthy column in this file: 3 accounts have no usable response (two blank, one undated), and 36 of the 37 dated ones are more than a week old.',
   discountPressure:
     'A heavily discounted last renewal is a standing signal of price pressure and weak perceived value.',
 };
