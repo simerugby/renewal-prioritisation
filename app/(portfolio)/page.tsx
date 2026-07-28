@@ -88,29 +88,62 @@ export default async function PortfolioPage() {
         />
       </div>
 
+      {/*
+        The hero. Everything else on this page is a list; this is the one answer,
+        so it gets the only accent border on the page and the only 26px type.
+        A CSM who reads nothing else should still leave knowing one account, one
+        reason and one action.
+      */}
       {top && (
-        <Card title="Start here" subtitle="The account where the next hour of CSM time is worth most — and why.">
-          <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
-            <div className="min-w-[220px]">
+        <section className="overflow-hidden rounded-lg border border-accent/30 bg-surface">
+          <div className="flex items-center gap-2 border-b border-border-subtle bg-accent-soft px-4 py-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-accent">Start here</span>
+            <span className="text-[11px] text-muted">
+              Where the next hour of CSM time is worth most
+            </span>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-4 px-4 py-4 lg:grid-cols-[minmax(0,340px)_1fr]">
+            <div>
               <Link
                 href={`/customer/${top.customer.customerId}`}
-                className="text-[16px] font-semibold hover:text-accent hover:underline"
+                className="text-[26px] font-semibold leading-tight tracking-tight hover:text-accent"
               >
                 {top.customer.customerName}
               </Link>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <RiskPill band={top.riskBand} score={top.riskScore} />
-                <span className="tnum text-[12px] text-muted">
-                  {gbp(top.customer.arrGbp)} · renews in {top.daysToRenewal} days
+                <span className="text-[11px] text-muted-2">
+                  {top.customer.segment} · {top.customer.region}
                 </span>
               </div>
+              <dl className="mt-3 flex gap-6">
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wide text-muted-2">At stake</dt>
+                  <dd className="tnum text-[17px] font-semibold">{gbp(top.customer.arrGbp)}</dd>
+                </div>
+                <div>
+                  <dt className="text-[10px] uppercase tracking-wide text-muted-2">Renews in</dt>
+                  <dd className="tnum text-[17px] font-semibold text-risk-critical">
+                    {top.daysToRenewal} days
+                  </dd>
+                </div>
+              </dl>
             </div>
-            <div className="flex-1 basis-[320px]">
-              <p className="text-[13px] font-medium">{top.playbook.action}</p>
-              <p className="mt-1 text-[12px] leading-relaxed text-muted">{top.playbook.rationale}</p>
+
+            <div className="border-t border-border-subtle pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+              <p className="text-[10px] uppercase tracking-wide text-muted-2">Do this first</p>
+              <p className="mt-1 text-[15px] font-semibold leading-snug">{top.playbook.action}</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted">{top.playbook.rationale}</p>
+              <p className="mt-3 text-[11px] text-muted-2">
+                {top.playbook.urgency} · Owner: {top.playbook.owner} ·{' '}
+                <Link href={`/customer/${top.customer.customerId}`} className="text-accent hover:underline">
+                  Open the evidence
+                </Link>
+              </p>
             </div>
           </div>
-        </Card>
+        </section>
       )}
 
       {quietButFlagged.length > 0 && (
@@ -118,7 +151,7 @@ export default async function PortfolioPage() {
           title="The score is calm; the note is not"
           subtitle="Every scored signal on these accounts sits in a normal range, and the free-text note says otherwise. A risk-sorted queue never reaches them."
         >
-          <p className="tnum text-[13px]">
+          <p className="tnum mb-3 text-[13px]">
             <span className="font-semibold">{quietButFlagged.length} accounts</span>
             <span className="text-muted"> · </span>
             <span className="font-semibold">{gbp(quietButFlagged.reduce((s, r) => s + r.customer.arrGbp, 0))}</span>
@@ -127,21 +160,52 @@ export default async function PortfolioPage() {
               {Math.max(...quietButFlagged.map((r) => r.priorityRank))}
             </span>
           </p>
-          <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
-            {quietButFlagged.map((r) => (
-              <Link
-                key={r.customer.customerId}
-                href={`/customer/${r.customer.customerId}`}
-                className="hover:text-accent hover:underline"
-              >
-                {r.customer.customerName}
-                <span className="tnum text-muted-2"> #{r.priorityRank}</span>
-              </Link>
-            ))}
-          </p>
-          <p className="mt-2.5 text-[11px] leading-relaxed text-muted-2">
-            Use the <span className="text-muted">Note disagrees</span> filter on the table below to work
-            this list. Open any of them to run a second read of the note.
+
+          {/* A table, not a run of links: the point is that these are scannable
+              against each other by value and by what the note actually says. */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-[12px]">
+              <thead>
+                <tr className="border-b border-border-subtle text-left text-[10px] uppercase tracking-wide text-muted-2">
+                  <th className="py-1.5 pr-3 font-medium">#</th>
+                  <th className="py-1.5 pr-3 font-medium">Account</th>
+                  <th className="py-1.5 pr-3 font-medium">ARR</th>
+                  <th className="py-1.5 pr-3 font-medium">Score says</th>
+                  <th className="py-1.5 font-medium">The note says</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quietButFlagged.map((r) => (
+                  <tr key={r.customer.customerId} className="group border-b border-border-subtle last:border-0">
+                    <td className="tnum py-2 pr-3 align-top text-muted-2">{r.priorityRank}</td>
+                    <td className="py-2 pr-3 align-top">
+                      <Link
+                        href={`/customer/${r.customer.customerId}`}
+                        className="font-medium group-hover:text-accent group-hover:underline"
+                      >
+                        {r.customer.customerName}
+                      </Link>
+                    </td>
+                    <td className="tnum py-2 pr-3 align-top">{gbp(r.customer.arrGbp)}</td>
+                    <td className="py-2 pr-3 align-top text-muted">
+                      {r.riskBand} {r.riskScore.toFixed(0)}
+                    </td>
+                    <td className="py-2 align-top text-risk-elevated">
+                      {r.noteFlags
+                        .filter((f) => MATERIAL_NOTE_FLAGS.includes(f.key))
+                        .map((f) => f.label.toLowerCase())
+                        .join(', ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-muted-2">
+            Selected by the keyword scanner, not by the model &mdash; measured, not assumed. Use the{' '}
+            <span className="text-muted">Note disagrees</span> filter below to work the list, and open any
+            account for a second read of its note.
           </p>
         </Card>
       )}
