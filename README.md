@@ -75,7 +75,9 @@ A single blended health score sends the CSM to Oakwell. So the app computes two 
 them: **risk** (is this account in trouble) and **value at stake** (ARR, weighted by how soon it
 renews). Oakwell falls from risk #1 to **priority #5** — still visible, still worth an email, no
 longer the thing you do first. The portfolio table shows this movement explicitly in a **vs risk**
-column.
+column, and the scatter on the portfolio page makes it visible in one glance: Oakwell sits far right
+and near the floor, while a dense cluster of £150k–£260k accounts sits quietly in the top-left — the
+expensive corner a risk-sorted queue never reaches.
 
 The value reference is the portfolio's 90th percentile of ARR, derived at load time rather than
 hard-coded, so the same model behaves sensibly on a book of £20k SMB accounts and a book of £5m
@@ -226,8 +228,9 @@ load and produce a ranking that changes between refreshes.
   there is nothing to calibrate against.
 - **Authentication.** The brief asks for something reviewers can open without credentials.
 - **Email or CRM integrations.** No system to integrate with, and a mocked one proves nothing.
-- **Charts beyond the inline bars.** The ranked list is the product. A scatter plot of risk against
-  value was the one visual I genuinely wanted; it is the first thing I would add.
+- **Any chart beyond the one scatter.** The ranked list is the product; the risk-against-value plot
+  earns its place because it is the argument. Trend lines would need history the dataset does not have,
+  and a segment breakdown answers a question nobody asked.
 - **A second AI feature.** The brief asks for one, so there is one. The three below are what I would
   build next, and they are worth stating because they point the opposite way to where this usually goes.
 

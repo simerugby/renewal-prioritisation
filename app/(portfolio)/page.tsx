@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import DataQualityBanner from '@/components/DataQualityBanner';
 import PortfolioTable from '@/components/PortfolioTable';
+import PriorityScatter from '@/components/PriorityScatter';
 import { Card, EmptyState, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
 import { DataLoadError, loadPortfolio, type Portfolio } from '@/lib/data';
 
@@ -99,6 +100,13 @@ export default async function PortfolioPage() {
           </div>
         </Card>
       )}
+
+      <Card
+        title="Risk against value at stake"
+        subtitle="The two questions the priority score combines. Top-right is where the trouble and the money coincide; top-left is the quiet, expensive corner a risk-sorted queue never reaches."
+      >
+        <PriorityScatter rows={rows} />
+      </Card>
 
       <PortfolioTable rows={rows} />
 
