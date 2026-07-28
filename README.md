@@ -147,9 +147,21 @@ how well I transcribed a corpus I had already read. So I rewrote 14 of the same 
 team would phrase them. *"No replacement is recorded"* becomes *"nobody has been lined up to pick this
 up"*. Then I re-ran:
 
-| | supplied notes | same facts, reworded |
+| Detected a material risk in the note | supplied notes | same facts, reworded |
 |---|---|---|
 | Keyword rules | 36/38 — **95%** | 1/14 — **7%** |
+| `gpt-4.1-nano` | 35/38 — **92%** | 13/14 — **93%** |
+
+The model matches the rules on the file the rules were written against, and holds when the wording
+changes, where the rules collapse. That is the whole argument, and `npm run eval` reproduces it.
+
+**One honest correction to my own measurement.** My first version scored exact agreement with my
+label taxonomy, and on that metric the model looked *worse* than the rules (45% against 95%). Reading
+the failures showed why: on *"our main advocate is no longer with the business"* I had labelled
+`sponsor-loss` and the model answered `ownerless-blocker`. Both readings send a CSM to the same place.
+I was scoring a multi-label problem as single-label and penalising defensible answers. The table above
+measures detection, which is what the product actually needs; the exact-label column is still printed
+by `npm run eval` so the disagreement is visible rather than tidied away.
 
 Both figures are biased and I wrote both sets; the second is unfair to the rules in exactly the way
 the first is generous to them. What they agree on is the finding: **the rules encode one company's

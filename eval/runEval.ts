@@ -16,8 +16,14 @@
  * incomplete — an eval that silently reports half of itself is worse than none.
  */
 
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
 import OpenAI from 'openai';
+
+// `.env.local` first, matching Next.js's own precedence. Plain `dotenv/config`
+// only reads `.env`, so the key sat there unread and the eval quietly reported
+// half of itself as if no key existed.
+loadEnv({ path: '.env.local', quiet: true });
+loadEnv({ quiet: true });
 import { NOTE_RULE_KEYS, scanNotes } from '../lib/noteScan';
 import { LABELS, runNoteScanEval } from './noteScanEval';
 import { PARAPHRASES } from './paraphraseSet';
@@ -62,6 +68,7 @@ async function main() {
   console.log(`  false positives     ${inCorpus.falsePositives.length}`);
 
   let llmInCorpus = 0;
+  let llmInCorpusDetected = 0;
   if (client) {
     const entries = Object.entries(LABELS).filter(([, v]) => v !== null) as [string, string][];
     const fs = await import('fs');
@@ -71,8 +78,10 @@ async function main() {
     for (const [id, label] of entries) {
       const got = await classify(client, noteById.get(id) ?? '');
       if (got === label) llmInCorpus++;
+      if (got && got !== 'none') llmInCorpusDetected++;
     }
-    console.log(`  ${MODEL} caught${' '.repeat(Math.max(1, 14 - MODEL.length))}${llmInCorpus}  (${pct(llmInCorpus, entries.length)})`);
+    console.log(`  ${MODEL} exact label ${llmInCorpus}  (${pct(llmInCorpus, entries.length)})`);
+    console.log(`  ${MODEL} detected any ${llmInCorpusDetected}  (${pct(llmInCorpusDetected, entries.length)})`);
   }
 
   // ---- Set 2: paraphrased ---------------------------------------------------
@@ -89,15 +98,29 @@ async function main() {
   console.log(`  cases               ${PARAPHRASES.length}`);
   console.log(`  rules caught        ${ruleHits}  (${pct(ruleHits, PARAPHRASES.length)})`);
 
+  // Detection versus taxonomy agreement, measured separately.
+  //
+  // Scoring a multi-label problem as single-label punishes a defensible answer.
+  // "Our main advocate is no longer with the business" is sponsor-loss by my
+  // label and a blocker with no named owner by the model's, and both readings
+  // send a CSM to the same place. What actually matters for the product is
+  // whether the note was flagged as carrying material risk at all — so that is
+  // measured on its own line.
+  const ruleDetectedPara = PARAPHRASES.filter((p) => scanNotes(p.paraphrase).length > 0).length;
+  console.log(`  rules detected any  ${ruleDetectedPara}  (${pct(ruleDetectedPara, PARAPHRASES.length)})`);
+
   let llmPara = 0;
+  let llmParaDetected = 0;
   const llmMisses: { id: string; label: string; got: string }[] = [];
   if (client) {
     for (const p of PARAPHRASES) {
       const got = await classify(client, p.paraphrase);
       if (got === p.label) llmPara++;
       else llmMisses.push({ id: p.id, label: p.label, got });
+      if (got && got !== 'none') llmParaDetected++;
     }
-    console.log(`  ${MODEL} caught${' '.repeat(Math.max(1, 14 - MODEL.length))}${llmPara}  (${pct(llmPara, PARAPHRASES.length)})`);
+    console.log(`  ${MODEL} exact label ${llmPara}  (${pct(llmPara, PARAPHRASES.length)})`);
+    console.log(`  ${MODEL} detected any ${llmParaDetected}  (${pct(llmParaDetected, PARAPHRASES.length)})`);
   }
 
   if (ruleMisses.length) {
