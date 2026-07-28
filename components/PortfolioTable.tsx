@@ -82,10 +82,22 @@ const VIEWS = {
   note: { note: true, label: 'calm score, note says otherwise' },
 } as const;
 
+/**
+ * The page is statically rendered, so on the first render `useSearchParams`
+ * returns nothing and a `useState` initialiser reading it would set every filter
+ * to its default — which is exactly what happened: clicking a headline figure
+ * scrolled to the table with no filter applied. Keying the inner component on
+ * the view means it remounts once the param resolves, and the initialisers run
+ * again with the real value.
+ */
 export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
   const params = useSearchParams();
-  const view = params.get('view') as keyof typeof VIEWS | null;
-  const preset = view && view in VIEWS ? VIEWS[view] : null;
+  const view = params.get('view') ?? 'all';
+  return <PortfolioTableView key={view} rows={rows} view={view} />;
+}
+
+function PortfolioTableView({ rows, view }: { rows: ScoredCustomer[]; view: string }) {
+  const preset = view in VIEWS ? VIEWS[view as keyof typeof VIEWS] : null;
 
   const [query, setQuery] = useState('');
   const [csm, setCsm] = useState('all');

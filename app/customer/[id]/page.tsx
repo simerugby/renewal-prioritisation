@@ -23,6 +23,14 @@ import { precomputedSecondRead } from '@/lib/secondReadBatch';
  */
 export const dynamic = 'force-dynamic';
 
+/** Urgency is a state, so it wears the status treatment rather than grey text. */
+const URGENCY_TONE: Record<string, string> = {
+  Today: 'bg-risk-critical-bg text-risk-critical',
+  'This week': 'bg-risk-elevated-bg text-risk-elevated',
+  'This month': 'bg-surface-2 text-muted',
+  Scheduled: 'bg-surface-2 text-muted-2',
+};
+
 /**
  * Metadata also performs the existence check, so an unknown id 404s early.
  *
@@ -218,14 +226,39 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="flex flex-col gap-4">
-          <Card title="Suggested next action" subtitle="Chosen by a decision table, not by a model. The rule that fired is stated below.">
-            <p className="text-[14px] font-medium leading-snug">{row.playbook.action}</p>
-            <div className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-muted-2">
-              <span>{row.playbook.urgency}</span>
-              <span>Owner: {row.playbook.owner}</span>
+          {/*
+            The one thing on this page a CSM is meant to act on, so it gets the
+            treatment: urgency as a coloured chip rather than a word in a row of
+            grey metadata, the action at 15px, and the rule that produced it
+            underneath in its own block so it reads as evidence rather than as
+            more of the same sentence.
+          */}
+          <section className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
+            <header className="flex flex-wrap items-center gap-2 border-b border-border-subtle px-4 py-2.5">
+              <h2 className="text-[13px] font-semibold tracking-tight">Do this next</h2>
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${URGENCY_TONE[row.playbook.urgency]}`}
+              >
+                {row.playbook.urgency}
+              </span>
+              <span className="ml-auto rounded border border-border-subtle px-1.5 py-0.5 text-[10px] text-muted">
+                {row.playbook.owner}
+              </span>
+            </header>
+
+            <div className="px-4 py-3.5">
+              <p className="text-[15px] font-semibold leading-snug">{row.playbook.action}</p>
+              <div className="mt-3 rounded border-l-2 border-border-strong bg-surface-2 px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wide text-muted-2">Why this rule fired</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted">{row.playbook.rationale}</p>
+              </div>
+              <p className="mt-2.5 text-[11px] leading-relaxed text-muted-2">
+                Chosen by a decision table in <span className="font-mono">lib/playbook.ts</span>, not by a
+                model. Rules are evaluated in order and the first match wins, so the same account always
+                produces the same play.
+              </p>
             </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-muted">{row.playbook.rationale}</p>
-          </Card>
+          </section>
 
           <Card title="Second read" subtitle="The one place this product calls a model. It reads the note; it does not touch the score.">
             <SecondRead customerId={c.customerId} initial={secondRead} />
