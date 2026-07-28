@@ -24,9 +24,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="min-h-full flex flex-col">
         <header className="border-b border-border-subtle bg-surface">
           <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2 px-5 py-2.5">
-            <Link href="/" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
-              Renewal Prioritisation
-            </Link>
+            {/*
+              A co-brand lockup, not a claim of authorship: the app name, a hair
+              rule, then the Aries wordmark. The rule matters — set flush against
+              each other the two read as one title.
+            */}
+            <div className="flex items-center gap-2.5">
+              <Link href="/" className="text-[15px] font-semibold tracking-tight">
+                Renewal Prioritisation
+              </Link>
+              <span className="h-3.5 w-px bg-border-strong" aria-hidden />
+              <span
+                className="aries-wordmark text-foreground/85"
+                role="img"
+                aria-label="Aries Global"
+                title="Case submission for Aries Global"
+              />
+            </div>
             <SiteNav />
             <div className="ml-auto flex items-center gap-3">
               {/*
@@ -49,6 +63,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <div className="mx-auto max-w-[1400px]">
             Scores are a transparent rubric for ordering work, not a prediction. This dataset carries no
             historical renewal outcomes, so nothing here is a churn probability.
+            <span className="mt-1 block">
+              Built by Simeón Carrera as a case submission for Aries Global. Not an Aries product.
+            </span>
           </div>
         </footer>
       </body>
