@@ -42,7 +42,13 @@ function RiskBar({ score, band }: { score: number; band: string }) {
           : 'bg-risk-stable';
   return (
     <div className="flex items-center gap-2">
-      <span className="tnum w-7 text-right text-[12px] font-medium">{score.toFixed(0)}</span>
+      {/*
+        Left-aligned, not right. The box stays a fixed 7 wide so every bar in the
+        column starts at the same x, but right-aligning inside it pushed every
+        two-digit score one digit-width in from the column edge — so the numbers
+        sat off the line the header and the band pill below them share.
+      */}
+      <span className="tnum w-7 text-[12px] font-medium">{score.toFixed(0)}</span>
       <span className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-2">
         <span className={`block h-full rounded-full ${colour}`} style={{ width: `${Math.max(2, score)}%` }} />
       </span>

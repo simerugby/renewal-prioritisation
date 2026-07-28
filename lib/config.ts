@@ -58,7 +58,7 @@ export const SIGNAL_LABELS: Record<SignalKey, string> = {
 /** Why each signal is in the model at all. Surfaced in the UI on hover. */
 export const SIGNAL_RATIONALE: Record<SignalKey, string> = {
   adoptionTrend:
-    'People voting with their feet. The clearest leading indicator of a renewal in trouble, and synced within a day of the snapshot for 36 of the 40 accounts in this book.',
+    'People voting with their feet. The clearest leading indicator of a renewal in trouble, and synced within a day of the snapshot for 35 of the 40 accounts in this book.',
   stageReadiness:
     'A renewal 18 days out that has not started is a process failure you can still fix. Compares stage reached against days remaining.',
   engagementRecency:
