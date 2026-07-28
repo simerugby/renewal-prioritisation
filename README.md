@@ -9,6 +9,7 @@ A tool for a customer success manager deciding **which renewals need attention, 
 | **Live app** | https://renewal-prioritisation.vercel.app |
 | **Repository** | https://github.com/simerugby/renewal-prioritisation |
 | **Working and measurements** | [EVIDENCE.md](EVIDENCE.md) |
+| **60-second walkthrough** | https://youtu.be/yO9A3nfCMa8 |
 
 Built on the supplied `renewal_customers.csv`: 40 synthetic accounts, £4,431,000 of ARR, snapshot
 dated 2026-07-21.
