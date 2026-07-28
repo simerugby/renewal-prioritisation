@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { loadCustomer } from '@/lib/data';
+import { loadPortfolio } from '@/lib/data';
 import { buildFallbackBrief, buildPrompt, type BriefResponse } from '@/lib/brief';
 
 export const runtime = 'nodejs';
@@ -47,7 +47,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'customerId is required.' }, { status: 400 });
   }
 
-  const row = await loadCustomer(customerId).catch(() => null);
+  const portfolio = await loadPortfolio().catch(() => null);
+  const row = portfolio?.rows.find((r) => r.customer.customerId === customerId) ?? null;
   if (!row) {
     return NextResponse.json({ error: `No account found with id ${customerId}.` }, { status: 404 });
   }
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
             content:
               'You are briefing a customer success manager before a renewal conversation. You are given a risk score and its evidence, already computed. Never dispute, recalculate or restate the score as a different number, and never express risk as a probability or percentage chance of churn. Your value is reading the free-text account note against the computed signals. Be specific, name dates and people from the note, and be brief. If the note adds nothing the signals do not already show, say so.',
           },
-          { role: 'user', content: buildPrompt(row) },
+          { role: 'user', content: buildPrompt(row, portfolio?.rows.length) },
         ],
       },
       { signal: AbortSignal.timeout(TIMEOUT_MS) },

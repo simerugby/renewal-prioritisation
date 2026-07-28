@@ -29,7 +29,7 @@ const gbp = (n: number) => `£${n.toLocaleString('en-GB')}`;
  * words, alongside the evidence that produced it — the model is a reader here,
  * not a calculator.
  */
-export function buildPrompt(row: ScoredCustomer): string {
+export function buildPrompt(row: ScoredCustomer, portfolioSize?: number): string {
   const c = row.customer;
   const scored = row.signals.filter((s) => s.normalised !== null).sort((a, b) => b.contribution - a.contribution);
   const excluded = row.signals.filter((s) => s.normalised === null);
@@ -41,7 +41,7 @@ export function buildPrompt(row: ScoredCustomer): string {
     `Renews ${c.renewalDate} — ${row.daysToRenewal} days from the portfolio snapshot.`,
     ``,
     `ALREADY COMPUTED — treat these as given:`,
-    `Risk score ${row.riskScore.toFixed(0)}/100 (${row.riskBand}). Priority rank ${row.priorityRank} of 40.`,
+    `Risk score ${row.riskScore.toFixed(0)}/100 (${row.riskBand}). Priority rank ${row.priorityRank}${portfolioSize ? ` of ${portfolioSize}` : ''}.`,
     `Confidence ${row.confidence}; ${Math.round(row.modelCoverage * 100)}% of the model's weight could be applied.`,
     `Suggested next action (chosen by rule): ${row.playbook.action} — ${row.playbook.urgency}, owner ${row.playbook.owner}.`,
     ``,
@@ -76,8 +76,14 @@ export function buildFallbackBrief(row: ScoredCustomer, reason: FallbackReason):
   const materialKeys = ['exit-signal', 'sponsor-loss', 'competitive-threat', 'budget-freeze', 'paperwork-stuck', 'unresolved-issue'];
   const material = row.noteFlags.filter((f) => materialKeys.includes(f.key));
 
-  const headline =
-    row.riskBand === 'Stable'
+  // The interesting case, and the one this product exists for: the structured
+  // signals are calm and the note is not. Saying "looks steady" there would be
+  // technically true of the score and actively misleading about the account.
+  const quietButFlagged = row.riskBand === 'Stable' && material.length > 0;
+
+  const headline = quietButFlagged
+    ? `${c.customerName} scores as stable, but the account note says otherwise — ${gbp(c.arrGbp)} renewing in ${row.daysToRenewal} days.`
+    : row.riskBand === 'Stable'
       ? `${c.customerName} looks steady — ${gbp(c.arrGbp)} renewing in ${row.daysToRenewal} days with no signal outside its normal range.`
       : `${c.customerName} is ${row.riskBand.toLowerCase()} risk on ${gbp(c.arrGbp)}, renewing in ${row.daysToRenewal} days.`;
 

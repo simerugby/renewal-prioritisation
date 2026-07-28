@@ -17,8 +17,18 @@ import { runNoteScanEval } from '../eval/noteScanEval';
 const gbp = (n: number) => `£${n.toLocaleString('en-GB')}`;
 
 async function main() {
-  const rows = await loadPortfolio(SNAPSHOT_DATE);
-  console.log(`Loaded ${rows.length} accounts. Snapshot ${SNAPSHOT_DATE}.\n`);
+  const portfolio = await loadPortfolio(SNAPSHOT_DATE);
+  const { rows } = portfolio;
+  console.log(`Loaded ${rows.length} accounts from ${portfolio.sourceName}. Snapshot ${SNAPSHOT_DATE}.`);
+  if (portfolio.quarantined > 0) console.log(`${portfolio.quarantined} rows quarantined as unparseable.`);
+  if (portfolio.issues.length > 0) {
+    console.log(`\n${portfolio.issues.length} data quality issue(s):`);
+    for (const i of portfolio.issues.slice(0, 12)) {
+      console.log(`  [${i.level}] ${i.scope}${i.column ? ` · ${i.column}` : ''} — ${i.message}`);
+    }
+    if (portfolio.issues.length > 12) console.log(`  …and ${portfolio.issues.length - 12} more.`);
+  }
+  console.log('');
 
   const totalArr = rows.reduce((s, r) => s + r.customer.arrGbp, 0);
   console.log(`Total ARR under management: ${gbp(totalArr)}`);

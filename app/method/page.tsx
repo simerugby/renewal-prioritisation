@@ -6,7 +6,9 @@ import { loadPortfolio } from '@/lib/data';
 export const metadata = { title: 'How the score works — Renewal Prioritisation' };
 
 export default async function MethodPage() {
-  const rows = await loadPortfolio().catch(() => []);
+  const rows = await loadPortfolio()
+    .then((p) => p.rows)
+    .catch(() => []);
   const keys = Object.keys(SIGNAL_WEIGHTS) as SignalKey[];
   const moved = rows
     .filter((r) => Math.abs(r.riskOnlyRank - r.priorityRank) >= 3)

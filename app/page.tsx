@@ -1,12 +1,13 @@
 import Link from 'next/link';
+import DataQualityBanner from '@/components/DataQualityBanner';
 import PortfolioTable from '@/components/PortfolioTable';
-import { Card, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
-import { loadPortfolio } from '@/lib/data';
+import { Card, EmptyState, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
+import { DataLoadError, loadPortfolio, type Portfolio } from '@/lib/data';
 
 export default async function PortfolioPage() {
-  let rows;
+  let portfolio: Portfolio;
   try {
-    rows = await loadPortfolio();
+    portfolio = await loadPortfolio();
   } catch (err) {
     // The page renders its own failure rather than throwing to the error
     // boundary, so a broken data file still leaves the reviewer with a usable
@@ -14,7 +15,24 @@ export default async function PortfolioPage() {
     return (
       <ErrorState
         title="The portfolio data could not be loaded"
-        detail={err instanceof Error ? err.message : 'Unknown error reading the portfolio file.'}
+        detail={
+          err instanceof DataLoadError
+            ? [err.message, err.hint].filter(Boolean).join(' ')
+            : err instanceof Error
+              ? err.message
+              : 'Unknown error reading the portfolio file.'
+        }
+      />
+    );
+  }
+
+  const { rows } = portfolio;
+
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="No accounts in this portfolio"
+        hint="The file loaded and validated but contains no scoreable accounts. Check that the export covers the period you expect."
       />
     );
   }
@@ -35,6 +53,8 @@ export default async function PortfolioPage() {
           separate questions that a single health score blurs together.
         </p>
       </div>
+
+      <DataQualityBanner issues={portfolio.issues} quarantined={portfolio.quarantined} total={rows.length} />
 
       <div className="grid grid-cols-2 gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3.5 md:grid-cols-4">
         <Stat label="ARR under management" value={gbp(totalArr)} hint={`${rows.length} accounts`} />

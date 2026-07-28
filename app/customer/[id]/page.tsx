@@ -6,10 +6,19 @@ import EvidencePanel from '@/components/EvidencePanel';
 import { Card, ConfidenceBadge, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
 import { loadCustomer, loadPortfolio } from '@/lib/data';
 
+/**
+ * Pre-render the accounts a CSM will actually open — the top of the priority
+ * list — and render the rest on demand. Pre-rendering every account is fine at
+ * 40 and is a build-time bomb at 40,000.
+ */
+const PRERENDER_TOP_N = Number(process.env.PRERENDER_TOP_N ?? 25);
+
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   try {
-    const rows = await loadPortfolio();
-    return rows.map((r) => ({ id: r.customer.customerId }));
+    const { rows } = await loadPortfolio();
+    return rows.slice(0, PRERENDER_TOP_N).map((r) => ({ id: r.customer.customerId }));
   } catch {
     return [];
   }
