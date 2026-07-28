@@ -31,7 +31,7 @@ Other commands:
 | command | what it does |
 |---|---|
 | `npm run verify` | Prints the full ranking, the confidence spread and the model's sanity checks. Every number in this README comes from here. |
-| `npm run eval` | The head-to-head behind the AI decision (see [finding 5](#5-the-rules-i-wrote-score-92-on-this-data-and-0-when-the-wording-changes)). Runs the model columns too if a key is set. |
+| `npm run eval` | The head-to-head behind the AI decision (see [finding 5](#5-the-rules-i-wrote-score-95-on-this-data-and-7-when-the-wording-changes)). Runs the model columns too if a key is set. |
 | `npm test` | 103 tests: unit, property-based (thousands of generated portfolios), and a second company's export. |
 | `npm run smoke` | End-to-end checks against a running server: status codes, rendered content, AI failure paths. |
 | `npm run check` | Typecheck, lint, tests and verification in one command. |
@@ -41,15 +41,15 @@ Other commands:
 
 ## Who I would prioritise first
 
-**Northstar Logistics** — £210,000, renewing in 18 days, and the only account where every axis agrees.
+**Northstar Logistics.** £210,000, renewing in 18 days, and the only account where every axis agrees.
 Active users fell 48% in a month (612 → 318), the invoice is disputed, the sponsor left in June, there
 has been no contact for 71 days, and the renewal process has not started. It ranks **first on
-priority**, and second on risk — behind a £12,000 account that is in even worse shape and should still
+priority** and second on risk, behind a £12,000 account that is in even worse shape and should still
 not be the first call. That gap is finding 2.
 
-Then: **Meridian Health Systems** (£180k, usage −38%, four critical tickets), **Lantern Hospitality**
-(£68k, has asked for a cancellation clause), **Atlas Manufacturing** (£140k, caught in a vendor
-consolidation), **Oakwell Design** (£12k, the most distressed account in the book — see finding 2).
+Then Meridian Health Systems (£180k, usage −38%, four critical tickets), Lantern Hospitality (£68k,
+has asked for a cancellation clause), Atlas Manufacturing (£140k, caught in a vendor consolidation),
+and Oakwell Design (£12k, the most distressed account in the book; see finding 2).
 
 ---
 
@@ -58,8 +58,8 @@ consolidation), **Oakwell Design** (£12k, the most distressed account in the bo
 ### 1. Eight accounts renew inside 30 days, and half of the near-term risk is process, not product
 
 £817,000 renews within 30 days of the snapshot. Four accounts worth **£385,000** renew within 45 days
-with the renewal stage still at *Not started*. That is the cheapest risk on the board — nothing is
-wrong with those customers, we simply have not opened the conversation.
+with the renewal stage still at *Not started*. That is the cheapest risk on the board. Nothing is
+wrong with those customers; we simply have not opened the conversation.
 
 This is why the model scores *renewal process readiness* at 16 of 100, second only to adoption. "Not
 started" is unremarkable at 120 days out and an emergency at 18, so the signal compares the stage
@@ -67,17 +67,17 @@ reached against the time remaining rather than treating stage as a flat category
 
 ### 2. The most at-risk account in the portfolio is worth £12,000, and it should not be the first call
 
-**Oakwell Design** ranks **#1 on risk** — active users down 82%, 3 of 25 seats in use, NPS −42, 120 days
-since anyone spoke to them, champion gone. It is worth £12,000. **Northstar Logistics** has the same
-pathology at **17.5× the value.**
+**Oakwell Design** ranks **#1 on risk**. Active users down 82%, 3 of 25 seats in use, NPS −42, 120
+days since anyone spoke to them, champion gone. It is worth £12,000. **Northstar Logistics** has the
+same pathology at **17.5× the value.**
 
 A single blended health score sends the CSM to Oakwell. So the app computes two axes and never merges
 them: **risk** (is this account in trouble) and **value at stake** (ARR, weighted by how soon it
-renews). Oakwell falls from risk #1 to **priority #5** — still visible, still worth an email, no
-longer the thing you do first. The portfolio table shows this movement explicitly in a **vs risk**
-column, and the scatter on the portfolio page makes it visible in one glance: Oakwell sits far right
-and near the floor, while a dense cluster of £150k–£260k accounts sits quietly in the top-left — the
-expensive corner a risk-sorted queue never reaches.
+renews). Oakwell falls from risk #1 to **priority #5**. Still visible, still worth an email, no
+longer the thing you do first. The portfolio table shows this movement in a **vs risk** column, and
+the scatter makes it visible in one glance: Oakwell sits far right and near the floor, while a dense
+cluster of £150k–£260k accounts sits quietly in the top-left. That is the expensive corner a
+risk-sorted queue never reaches.
 
 The value reference is the portfolio's 90th percentile of ARR, derived at load time rather than
 hard-coded, so the same model behaves sensibly on a book of £20k SMB accounts and a book of £5m
@@ -110,7 +110,7 @@ case for NPS. **Stonebridge Education** (£95,000, renewing in 25 days) had its 
 earlier. Both usage signals are excluded. It is scored on **51% of the model**, marked Low confidence,
 and the app says so on the account page rather than presenting a confident 46.
 
-### 4. "Verbal commitment" is not a safe stage — three of the four are stuck on money
+### 4. "Verbal commitment" is not a safe stage: three of the four are stuck on money
 
 | Account | ARR | Stage | Invoice |
 |---|---|---|---|
@@ -120,7 +120,7 @@ and the app says so on the account page rather than presenting a confident 46.
 | Mosaic Foods | £56,000 | Verbal commitment | Current |
 
 **£352,000 sits in the most reassuring stage in the CRM with unresolved billing underneath it.**
-Greenway Bank in particular reads as healthy on every behavioural signal — NPS 61, usage up 8% — while
+Greenway Bank in particular reads as healthy on every behavioural signal (NPS 61, usage up 8%) while
 the order form is unsigned and finance is disputing a services charge.
 
 The app does not resolve this. Picking a side would invent a fact, and either record could be the
@@ -132,20 +132,20 @@ and puts the two records side by side so a human can settle it with one phone ca
 The scoring model reads nine structured columns. It cannot read `customer_notes`, and that column
 carries facts that change the answer.
 
-The sharpest case is **Quantum Public Sector** — the **largest account in the book at £260,000**,
+The sharpest case is **Quantum Public Sector**, the **largest account in the book at £260,000**,
 renewing in 30 days. Usage is growing, NPS is 46, funding is approved, the invoice is current. It
 scores **14.9 risk** and ranks **#15**. The note reads: *"the original sponsor moves roles on 1 August
 and no replacement is recorded."* Nothing in the structured data knows this.
 
 Before reaching for a model I wrote a keyword scanner and measured it, because "an LLM would be better
 here" is an assertion until it is tested. Against 38 hand-labelled note risks in the supplied file it
-caught **36 of 38 (95%)** with zero false positives — which looked like an argument for deleting the
+caught **36 of 38 (95%)** with zero false positives, which looked like an argument for deleting the
 API call.
 
 That number is contaminated. **I wrote those regexes after reading all forty notes**, so it measures
 how well I transcribed a corpus I had already read. So I rewrote 14 of the same facts the way another
-team would phrase them — *"no replacement is recorded"* becomes *"nobody has been lined up to pick this
-up"* — and re-ran:
+team would phrase them. *"No replacement is recorded"* becomes *"nobody has been lined up to pick this
+up"*. Then I re-ran:
 
 | | supplied notes | same facts, reworded |
 |---|---|---|
@@ -184,7 +184,7 @@ wrong match is visible in the same glance as the claim.
 | **Exactly one LLM call, and it cannot move a number** | Finding 5. The score is computed server-side and passed to the model as read-only context; the response is advisory and rendered in its own panel. An unreproducible output must not reorder a work queue. | The insight is ignorable. Correct. |
 | **Everything anchors to the stated 2026-07-21 snapshot** | The file is a snapshot; the app has a clock. Using `new Date()` would make "18 days to renewal" drift every day you open it, and no number here would reproduce. | The app is not live. It is honest about being a snapshot. |
 
-**On cost.** The AI feature is one call per account, on demand — never on page load, never in a loop
+**On cost.** The AI feature is one call per account, on demand. Never on page load, never in a loop
 over the portfolio. Small model, capped at 400 output tokens, temperature 0.2, 12-second timeout, and
 cached per account so a reviewer clicking through 40 accounts twice pays for 40 calls, not 80. At
 `gpt-4o-mini` rates a full pass over this portfolio costs a fraction of a penny. The expensive
@@ -198,8 +198,8 @@ load and produce a ranking that changes between refreshes.
 - **Historical renewal outcomes.** The single input that would change the most. With two years of
   labelled outcomes I would fit a model, hold the rubric as the explanation layer, and finally be able
   to say whether these nine signals predict anything. Right now nobody can.
-- **The weights are judgement, not evidence.** They encode a view — that commercial process signals
-  sit closer to the decision than sentiment does — and a CSM who has actually worked this book might
+- **The weights are judgement, not evidence.** They encode a view, that commercial process signals
+  sit closer to the decision than sentiment does, and a CSM who has actually worked this book might
   reorder them. They are all in one file (`lib/config.ts`) for exactly that reason. Nothing in the
   engine hard-codes a number.
 - **Which record is stale in a contradiction.** If billing were known to be authoritative over CRM
@@ -224,7 +224,7 @@ load and produce a ranking that changes between refreshes.
   slider invites fiddling until the ranking agrees with you, which is the opposite of accountability.
   The weights are published, explained and version-controlled instead. If a team wants different ones
   they should argue for them and commit them.
-- **A churn probability.** Explicitly ruled out by the brief, and it would have been wrong anyway —
+- **A churn probability.** Explicitly ruled out by the brief, and it would have been wrong anyway:
   there is nothing to calibrate against.
 - **Authentication.** The brief asks for something reviewers can open without credentials.
 - **Email or CRM integrations.** No system to integrate with, and a mocked one proves nothing.
@@ -242,7 +242,7 @@ to explain to the person who has to defend a ranking. The same intelligence is w
 at the point a new company is onboarded.
 
 1. **A schema-mapping assistant.** Company number two arrives with `Part-paid` and `Legal review` in
-   columns this model has never seen — that is a real fixture in `lib/portability.test.ts`, and today
+   columns this model has never seen. That is a real fixture in `lib/portability.test.ts`, and today
    those values are correctly excluded and a human has to map them by hand. A model is good at
    proposing that mapping. It proposes, a person approves, the result is written to `lib/config.ts`,
    and **runtime stays pure arithmetic**. This is the only place the deterministic design is genuinely
@@ -255,7 +255,7 @@ at the point a new company is onboarded.
 
 3. **Drift monitoring.** `npm run eval` already compares rules against the model on a labelled set.
    Run it weekly on a sample and alert when the gap crosses a threshold. That is a model auditing the
-   deterministic system, which is the useful direction — and it costs about a penny a week.
+   deterministic system, which is the useful direction, and it costs about a penny a week.
 
 4. **Score history.** The brief's binding constraint is that there are no historical renewal outcomes.
    But a tool that runs weekly *creates* them: snapshot every score, and after two renewal cycles
@@ -291,7 +291,7 @@ structured opinion, and the app is written to make that opinion easy to inspect 
 with rather than easy to trust.
 
 That test needs one thing this does not yet do: **keep its own history.** The brief's binding
-constraint is that there are no historical renewal outcomes — but a tool that runs weekly creates
+constraint is that there are no historical renewal outcomes. A tool that runs weekly creates
 them. Snapshotting every score is a small deterministic change and it is what converts everything
 above from a plan into an actual measurement. It is the first thing I would build.
 
@@ -302,15 +302,15 @@ above from a plan into an actual measurement. It is the first thing I would buil
 This is a snapshot of 40 rows. Everything below exists because the next file will not be.
 
 **Nothing is tuned to this file's contents.** The scoring engine (`lib/scoring.ts`) contains no
-numbers at all — every weight, threshold and staleness limit lives in `lib/config.ts`. The value
+numbers at all. Every weight, threshold and staleness limit lives in `lib/config.ts`. The value
 reference is derived from the portfolio's ARR distribution at load time; an earlier version had
 `ARR_REFERENCE = 260_000` hard-coded to this book's largest account, which would have flattened the
 value axis on any book with a bigger one. Urgency extends past a year rather than clamping at this
 file's 129-day horizon.
 
 **Unrecognised data is excluded, never assumed healthy.** `lib/schema.ts` validates every row. A new
-`invoice_status` value the model has not seen is reported, dropped from scoring, and shown in the UI —
-it does *not* fall through to "Current". That was a real bug in the first version (`INVOICE_RISK[x] ??
+`invoice_status` value the model has not seen is reported, dropped from scoring, and shown in the UI.
+It does *not* fall through to "Current". That was a real bug in the first version (`INVOICE_RISK[x] ??
 0` scored an unknown billing state as perfectly healthy) and there is now a test named after it.
 
 **Structural failure is loud; row-level failure is contained.** A missing required column stops the
@@ -327,18 +327,18 @@ book.
 customer id rendered the right "no such account" page under an HTTP **200**. `notFound()` cannot set a
 status once a response has begun streaming, and a `loading.tsx` anywhere above a route is what starts
 it. The fix was to scope the skeleton to the portfolio page with a route group, leaving the account
-route unwrapped. `npm run smoke` asserts both behaviours against a running server — status codes,
+route unwrapped. `npm run smoke` asserts both behaviours against a running server: status codes,
 rendered content, and the AI endpoint's failure paths.
 
 **Scale, honestly.** Scoring is O(n) with roughly forty arithmetic operations per account and the
 whole book is held in memory. Tens of thousands of accounts are fine. Millions are not, and the right
-answer there is to push scoring into the warehouse and serve pre-scored pages — which is the seam
+answer there is to push scoring into the warehouse and serve pre-scored pages, which is the seam
 above, not a rewrite.
 
 **103 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
 the author thought of, which on a 40-row file is a weak claim. `lib/properties.test.ts` uses
-`fast-check` to generate thousands of portfolios per run — unmapped enums, negative ARR, dates
-centuries apart, lone surrogates, empty books, duplicate ids — and asserts invariants that must hold
+`fast-check` to generate thousands of portfolios per run (unmapped enums, negative ARR, dates
+centuries apart, lone surrogates, empty books, duplicate ids) and asserts invariants that must hold
 for *any* input: the risk score is always finite and in range, priority is never negative, the
 evidence panel's contributions always sum to the headline number, ranks are always a permutation of
 1..n.
@@ -352,7 +352,7 @@ It found three defects in the first run, and all three were the silent kind:
 | An unquoted comma inside free text truncated the note and dropped the rest | The most common CSV defect there is, and it was invisible |
 
 `lib/portability.test.ts` is the other half: **a second company's export**, written to be awkward in
-the ways a real one is — BOM, CRLF, trailing commas, unquoted commas in notes, enum values this model
+the ways a real one is: BOM, CRLF, trailing commas, unquoted commas in notes, enum values this model
 has never seen, no NPS columns at all, an SMB book two orders of magnitude smaller, a duplicate id, a
 `15/09/2026` date and a renewal already in the past. Five accounts load, two quarantine, every
 unmapped value is reported by name, and the value axis rescales to the smaller book.
@@ -363,7 +363,7 @@ true.
 
 `npm run check` runs typecheck, lint, tests and the verification harness together.
 
-**What does not port** is the keyword scanner. Finding 5 measured exactly how badly — 0% — and that is
+**What does not port** is the keyword scanner. Finding 5 measured exactly how badly (7%), and that is
 the honest boundary between the part of this that is a system and the part that is a transcription of
 one company's writing habits.
 
@@ -372,7 +372,7 @@ one company's writing habits.
 ## Notes on the data
 
 - Everything is anchored to the stated snapshot of **2026-07-21**, shown in the header on every page.
-- Blank means *not recorded* and is handled as such. It is never coerced to zero — a missing value
+- Blank means *not recorded* and is handled as such. It is never coerced to zero, because a missing value
   scoring as a real measurement is the failure mode this dataset is built to catch.
 - Every figure in this README is produced by `npm run verify` and `npm run eval` from the supplied CSV.
   Nothing here is estimated or recalled.
@@ -380,4 +380,4 @@ one company's writing habits.
 ## Stack
 
 Next.js 16 (App Router), TypeScript, Tailwind CSS v4, OpenAI SDK. Deployed on Vercel. No database, no
-auth, no client-side state library — the data is a static snapshot and the app is honest about that.
+auth, no client-side state library. The data is a static snapshot and the app is honest about that.

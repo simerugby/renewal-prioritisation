@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { RISK_BANDS } from '@/lib/config';
 import type { ScoredCustomer } from '@/lib/types';
 import { gbp } from './ui';
 
@@ -25,6 +26,7 @@ const PLOT_W = W - M.left - M.right;
 const PLOT_H = H - M.top - M.bottom;
 
 const HIGHLIGHT_COUNT = 5;
+const CRITICAL_AT = RISK_BANDS.find((b) => b.band === 'Critical')?.min ?? 65;
 
 export default function PriorityScatter({ rows }: { rows: ScoredCustomer[] }) {
   if (rows.length === 0) return null;
@@ -75,17 +77,19 @@ export default function PriorityScatter({ rows }: { rows: ScoredCustomer[] }) {
             />
           ))}
 
-          {/* The Critical threshold, named. A guide line with no label is a mystery. */}
+          {/* The Critical threshold, named, and read from the same config the
+              bands are scored against — hard-coding it here would let the chart
+              and the badges disagree the moment someone retunes a band. */}
           <line
-            x1={x(65)}
-            x2={x(65)}
+            x1={x(CRITICAL_AT)}
+            x2={x(CRITICAL_AT)}
             y1={M.top}
             y2={M.top + PLOT_H}
             stroke="var(--viz-axis)"
             strokeWidth={1}
             strokeDasharray="3 3"
           />
-          <text x={x(65) + 5} y={M.top + 11} fontSize={10} fill="var(--viz-axis)">
+          <text x={x(CRITICAL_AT) + 5} y={M.top + 11} fontSize={10} fill="var(--viz-axis)">
             Critical
           </text>
 

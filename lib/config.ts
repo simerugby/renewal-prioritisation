@@ -58,7 +58,7 @@ export const SIGNAL_LABELS: Record<SignalKey, string> = {
 /** Why each signal is in the model at all. Surfaced in the UI on hover. */
 export const SIGNAL_RATIONALE: Record<SignalKey, string> = {
   adoptionTrend:
-    'People voting with their feet. The clearest leading indicator of a renewal in trouble, and measured fresh for 36 of 40 accounts.',
+    'People voting with their feet. The clearest leading indicator of a renewal in trouble, and synced within a day of the snapshot for 36 of the 40 accounts in this book.',
   stageReadiness:
     'A renewal 18 days out that has not started is a process failure you can still fix. Compares stage reached against days remaining.',
   engagementRecency:
@@ -72,7 +72,7 @@ export const SIGNAL_RATIONALE: Record<SignalKey, string> = {
   supportStrain:
     'Weighted toward critical tickets and normalised per 100 seats, so a large account is not penalised for having more users.',
   sentiment:
-    'Deliberately the second-lightest weight. NPS is the most-quoted CS metric and the least trustworthy column in this file: 36 of 40 responses are more than a week old.',
+    'Deliberately the second-lightest weight. NPS is the most-quoted CS metric and the least trustworthy column in this file: 3 accounts have no response at all, and 36 of the 37 that do are more than a week old.',
   discountPressure:
     'A heavily discounted last renewal is a standing signal of price pressure and weak perceived value.',
 };
