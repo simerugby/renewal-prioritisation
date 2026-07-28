@@ -184,12 +184,24 @@ wrong match is visible in the same glance as the claim.
 | **Exactly one LLM call, and it cannot move a number** | Finding 5. The score is computed server-side and passed to the model as read-only context; the response is advisory and rendered in its own panel. An unreproducible output must not reorder a work queue. | The insight is ignorable. Correct. |
 | **Everything anchors to the stated 2026-07-21 snapshot** | The file is a snapshot; the app has a clock. Using `new Date()` would make "18 days to renewal" drift every day you open it, and no number here would reproduce. | The app is not live. It is honest about being a snapshot. |
 
-**On cost.** The AI feature is one call per account, on demand. Never on page load, never in a loop
-over the portfolio. Small model, capped at 400 output tokens, temperature 0.2, 12-second timeout, and
-cached per account so a reviewer clicking through 40 accounts twice pays for 40 calls, not 80. At
-`gpt-4o-mini` rates a full pass over this portfolio costs a fraction of a penny. The expensive
-mistake would have been putting the model in the scoring path, where it would run 40 times per page
-load and produce a ranking that changes between refreshes.
+**On cost and model choice.** The feature is one call per account, on demand. Never on page load,
+never in a loop over the portfolio. Capped at 400 output tokens, temperature 0.2, a 12-second timeout,
+cached per account so a reviewer clicking through 40 accounts twice pays for 40 calls rather than 80,
+and rate limited to 40 calls per IP per 10 minutes so a public URL cannot run up somebody else's bill.
+The expensive mistake would have been putting the model in the scoring path, where it would run 40
+times per page load and produce a ranking that changed between refreshes.
+
+The model is `gpt-4.1-nano`, and it was chosen by the key rather than by me. The key you supplied is
+scoped to exactly one model, which I found by asking the API rather than by guessing:
+
+```
+GET /v1/models  →  { "count": 1, "models": ["gpt-4.1-nano"] }
+```
+
+That is a sensible thing for you to have done, and it exercised the fallback in production before any
+reviewer saw it. My first deploy requested `gpt-4o-mini`, got a 403 `model_not_found`, and the app
+served the deterministic brief with a visible note instead of showing an error. The model is read from
+`OPENAI_MODEL`, so pointing this at a different one is an environment variable, not a code change.
 
 ---
 

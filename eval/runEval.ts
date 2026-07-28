@@ -22,7 +22,7 @@ import { NOTE_RULE_KEYS, scanNotes } from '../lib/noteScan';
 import { LABELS, runNoteScanEval } from './noteScanEval';
 import { PARAPHRASES } from './paraphraseSet';
 
-const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-nano';
 
 const SYSTEM = `You classify free-text CRM account notes for a renewal-risk tool.
 Return the single category that best describes the most material renewal risk or opportunity in the note.

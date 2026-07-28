@@ -29,7 +29,7 @@ export const runtime = 'nodejs';
  * are free.
  */
 
-const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-nano';
 const TIMEOUT_MS = 12_000;
 const MAX_OUTPUT_TOKENS = 400;
 
