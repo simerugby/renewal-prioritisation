@@ -12,8 +12,9 @@
     "eval": "tsx eval/runEval.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run verify",
-    "smoke": "bash scripts/smoke.sh"
+    "check": "npm run typecheck && npm run lint && npm run test && npm run secret-scan && npm run verify",
+    "smoke": "bash scripts/smoke.sh",
+    "secret-scan": "bash scripts/secret-scan.sh"
   },
   "dependencies": {
     "next": "16.2.12",

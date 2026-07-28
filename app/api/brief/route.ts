@@ -35,6 +35,13 @@ const MAX_OUTPUT_TOKENS = 400;
 
 const cache = new Map<string, BriefResponse>();
 
+/** Belt and braces: strip anything key-shaped before it can reach a log. */
+function redactSecrets(text: string): string {
+  return text
+    .replace(/sk-[A-Za-z0-9_-]{16,}/g, 'sk-[REDACTED]')
+    .replace(/Bearer\s+[A-Za-z0-9._-]{16,}/gi, 'Bearer [REDACTED]');
+}
+
 export async function POST(request: Request) {
   let customerId: string;
   try {
@@ -145,7 +152,14 @@ export async function POST(request: Request) {
         : err instanceof Error && /429|rate/i.test(err.message)
           ? 'rate-limited'
           : 'error';
-    console.error('[api/brief] falling back:', err);
+
+    // Log a summary, never the raw SDK error. Provider error objects carry the
+    // request context that produced them, and the habit of dumping them whole is
+    // how an Authorization header ends up in a log aggregator. Anything that
+    // looks like a key is redacted on the way out as a second line of defence.
+    const detail = err instanceof Error ? err.message : 'unknown error';
+    console.error(`[api/brief] falling back (${reason}): ${redactSecrets(detail)}`);
+
     return NextResponse.json(buildFallbackBrief(row, reason));
   }
 }
