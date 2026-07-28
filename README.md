@@ -179,6 +179,12 @@ me: it is scoped to exactly one model, which I found by asking the API rather th
 deploy requested `gpt-4o-mini`, got a 403, and the app served the deterministic result with a visible
 note instead of an error — the fallback proving itself in production before any reviewer saw it.
 
+The panel also prints what validation rejected, and counting those was worth more than reading the
+outputs. A first batch showed 42 rejections across the book; nineteen were my prompt numbering clauses
+from 0 while the model answered from 1. Fixing the prompt took the batch to zero, and a second branch
+that survived validation once in twenty-three tries was cut rather than shipped as noise. `EVIDENCE.md`
+has the counts.
+
 ---
 
 ## What could change these decisions

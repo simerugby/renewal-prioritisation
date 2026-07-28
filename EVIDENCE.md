@@ -95,6 +95,17 @@ Three properties are enforced by code rather than promised in a prompt:
 3. **An attribution must name a signal that actually fired.** You cannot contest a signal that scored
    nothing. Failed attributions are dropped and the finding is kept without one.
 
+**Counting what the validator threw away caught a bug of mine, not the model's.** The first full batch
+over all forty accounts logged 42 rejected outputs, showing on two thirds of the book. That reads like
+the checks earning their keep, and I nearly wrote it up that way. Nineteen of the 42 were findings
+citing a clause that "does not exist" — and the clauses did exist. The prompt numbered them from 0 and
+the model answered in 1-based terms, which is what any reader would do. Numbering from 1 and
+subtracting on the way in took the same batch to **0 rejections**. A second branch, which let the model
+challenge a structured field rather than the note, survived validation once in twenty-three attempts;
+that is not a feature, it is noise on two thirds of the accounts, and it was cut. Neither fact was
+visible from reading the output. Both came from counting the rejects, which is the argument for putting
+them on screen rather than swallowing them.
+
 **It answers yes/no questions, not a multiple choice, and that was a correction.** The first version
 asked the model to pick one of four directions. It returned *adds-nothing* for Quantum — the account
 this feature exists for — and *adds-opportunity* for a competitor being trialled. I should have
