@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+  <img src="docs/banner-light.png" alt="Renewal Prioritisation — a case submission for Aries Global. 40 accounts, £4,431,000 ARR, snapshot 2026-07-21. A scatter of the scored book plots risk against ARR: the highest-risk account is worth £12,000 and the highest-priority one is worth £210,000.">
+</picture>
+
 # Renewal Prioritisation
 
 A tool for a customer success manager deciding **which renewals need attention, why, and what to do next.**
@@ -5,7 +10,8 @@ A tool for a customer success manager deciding **which renewals need attention, 
 **Live app** — https://renewal-prioritisation.vercel.app
 **Repository** — https://github.com/simerugby/renewal-prioritisation
 
-40 accounts, £4,431,000 of ARR, snapshot dated 2026-07-21.
+Built on the supplied `renewal_customers.csv` — 40 synthetic accounts, £4,431,000 of ARR, snapshot
+dated 2026-07-21.
 
 Working and measurements behind the decisions here: **[EVIDENCE.md](EVIDENCE.md)**.
 
@@ -176,7 +182,7 @@ Full methodology, including where my own measurements were wrong twice, is in
 | **Stale signals dropped, model re-normalised** | A 238-day-old NPS is not evidence about today, and neither is a usage window that closed a month ago. | An account on 51% of the model is not strictly comparable to one on 100%. That figure is therefore shown. |
 | **Contradictions lower confidence, never risk** | Resolving them silently, in either direction, invents a fact. | The app declines to answer the hardest cases. That *is* the answer. |
 | **Next action by decision table, not by model** | Routing attention is a small, knowable answer space. A rule can be read and argued with. | Less fluent phrasing than a model would produce. |
-| **One LLM call, and it cannot move a number** | The score is computed server-side and passed to the model as read-only context — in fact the score is withheld entirely, so it reads the note independently. | The insight is ignorable. Correct: an unreproducible output must not reorder a work queue. |
+| **One LLM call, and it cannot move a number** | The score is computed server-side and never reaches the prompt — not the number, not the band, not the rank — so the model reads the note independently rather than reasoning toward a total it has already been shown. | The insight is ignorable. Correct: an unreproducible output must not reorder a work queue. |
 | **The triage list stays deterministic** | Measured, not assumed. The rules select 9 accounts at 71% precision; the model, at the recall needed to catch Quantum, flags 19 of 28 calm accounts. A list of 19 is not a list. | The model's better recall. It reads the note instead. |
 | **Everything anchors to the stated 2026-07-21 snapshot** | Using `new Date()` would make "18 days to renewal" drift daily and no figure here would reproduce. | The app is not live. It is honest about being a snapshot. |
 
@@ -242,8 +248,8 @@ new file. That is right for a case study built on a file you supplied, and it is
 CSM would open on a Monday — so it is worth being explicit about the path rather than leaving it
 implied by an interface.
 
-`PortfolioSource` in `lib/data.ts` is the seam: two methods, returning raw records and any structural
-issues. Everything downstream — validation, quarantine, scoring, the data-quality banner — already
+`PortfolioSource` in `lib/data.ts` is the seam: a name and one method, `load()`, returning raw records
+and any structural issues together. Everything downstream — validation, quarantine, scoring, the data-quality banner — already
 works on whatever it returns. Three steps, in the order I would actually do them:
 
 1. **Upload in the browser** (hours). A CSM drops a file, it is parsed, validated and scored in the
