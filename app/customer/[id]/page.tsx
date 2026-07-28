@@ -5,6 +5,7 @@ import DecisionRecorder from '@/components/DecisionRecorder';
 import EvidencePanel from '@/components/EvidencePanel';
 import { Card, ConfidenceBadge, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
 import { loadCustomer } from '@/lib/data';
+import { MATERIAL_NOTE_FLAGS } from '@/lib/brief';
 
 /**
  * Rendered per request rather than pre-generated, for two reasons.
@@ -68,6 +69,15 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
 
   const c = row.customer;
 
+  // The case this product exists for: nine structured signals are calm and the
+  // free-text note is not. Quantum Public Sector is the largest account in the
+  // book, scores 15, and its note says the sponsor leaves on 1 August. Putting
+  // that next to the score is the difference between the app making the point
+  // and the reader having to scroll for it.
+  const materialNoteFlags = row.noteFlags.filter((f) => MATERIAL_NOTE_FLAGS.includes(f.key));
+  const quietButFlagged =
+    (row.riskBand === 'Stable' || row.riskBand === 'Watch') && materialNoteFlags.length > 0;
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -83,6 +93,15 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
           {c.customerId} · {c.segment} · {c.industry} · {c.region} · CSM {c.csmName} ·{' '}
           {c.productsOwned.join(', ')}
         </p>
+
+        {quietButFlagged && (
+          <p className="mt-2.5 rounded border border-risk-elevated/30 bg-risk-elevated-bg px-3 py-2 text-[12px] leading-relaxed">
+            <span className="font-semibold text-risk-elevated">The score is calm; the note is not.</span>{' '}
+            Every scored signal sits in a normal range, but the account note flags{' '}
+            {materialNoteFlags.map((f) => f.label.toLowerCase()).join(' and ')}. Nothing in the structured
+            data can see this.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 rounded-lg border border-border-subtle bg-surface px-4 py-3.5 md:grid-cols-5">

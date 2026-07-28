@@ -23,8 +23,11 @@
   --risk-critical-bg: #fff1e9;
   --risk-elevated: #b45309;
   --risk-elevated-bg: #fef6e7;
-  --risk-watch: #4d7c0f;
-  --risk-watch-bg: #f3f8e8;
+  /* Deliberately neutral, not green. "Watch" means keep an eye on this; a green
+     badge reads as "fine" and was making a 42-scoring, low-confidence account
+     look healthier than a 30-scoring one. Green is reserved for Stable. */
+  --risk-watch: #4b5563;
+  --risk-watch-bg: #f1f3f5;
   --risk-stable: #047857;
   --risk-stable-bg: #ecfdf5;
 }
@@ -46,8 +49,8 @@
     --risk-critical-bg: #2a1710;
     --risk-elevated: #fbbf24;
     --risk-elevated-bg: #261c0c;
-    --risk-watch: #a3e635;
-    --risk-watch-bg: #1a2010;
+    --risk-watch: #9ca3af;
+    --risk-watch-bg: #1b1d21;
     --risk-stable: #34d399;
     --risk-stable-bg: #0d201a;
   }

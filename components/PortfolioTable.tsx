@@ -2,8 +2,19 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { MATERIAL_NOTE_FLAGS } from '@/lib/brief';
 import type { ScoredCustomer } from '@/lib/types';
 import { ConfidenceBadge, EmptyState, RiskPill, gbp } from './ui';
+
+/**
+ * True when every scored signal is calm and the free-text note is not. These are
+ * the accounts a purely quantitative queue walks straight past, so the list has
+ * to mark them even though the score does not move.
+ */
+function isQuietButFlagged(r: ScoredCustomer): boolean {
+  if (r.riskBand !== 'Stable' && r.riskBand !== 'Watch') return false;
+  return r.noteFlags.some((f) => MATERIAL_NOTE_FLAGS.includes(f.key));
+}
 
 type SortKey = 'priority' | 'risk' | 'arr' | 'renewal' | 'name';
 
@@ -257,6 +268,17 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
                     >
                       {r.customer.customerName}
                     </Link>
+                    {isQuietButFlagged(r) && (
+                      <span
+                        className="ml-1.5 align-middle text-[10px] font-medium text-risk-elevated"
+                        title={`The score is calm but the account note flags ${r.noteFlags
+                          .filter((f) => MATERIAL_NOTE_FLAGS.includes(f.key))
+                          .map((f) => f.label.toLowerCase())
+                          .join(' and ')}.`}
+                      >
+                        ⚑ note
+                      </span>
+                    )}
                     <div className="mt-0.5 text-[11px] text-muted-2">
                       {r.customer.segment} · {r.customer.region} · {r.customer.csmName}
                     </div>

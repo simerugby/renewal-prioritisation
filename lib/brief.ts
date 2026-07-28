@@ -23,6 +23,17 @@ export interface BriefResponse {
 }
 
 const gbp = (n: number) => `£${n.toLocaleString('en-GB')}`;
+const lowerFirst = (s: string) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+
+/** Note categories that change what a CSM should do, as opposed to context. */
+export const MATERIAL_NOTE_FLAGS = [
+  'exit-signal',
+  'sponsor-loss',
+  'competitive-threat',
+  'budget-freeze',
+  'paperwork-stuck',
+  'unresolved-issue',
+];
 
 /**
  * Everything the model is allowed to see. The score arrives as a stated fact, in
@@ -73,8 +84,7 @@ export function buildFallbackBrief(row: ScoredCustomer, reason: FallbackReason):
     .sort((a, b) => b.contribution - a.contribution)
     .slice(0, 3);
 
-  const materialKeys = ['exit-signal', 'sponsor-loss', 'competitive-threat', 'budget-freeze', 'paperwork-stuck', 'unresolved-issue'];
-  const material = row.noteFlags.filter((f) => materialKeys.includes(f.key));
+  const material = row.noteFlags.filter((f) => MATERIAL_NOTE_FLAGS.includes(f.key));
 
   // The interesting case, and the one this product exists for: the structured
   // signals are calm and the note is not. Saying "looks steady" there would be
@@ -95,7 +105,7 @@ export function buildFallbackBrief(row: ScoredCustomer, reason: FallbackReason):
       ? `Two records disagree here: ${row.contradictions[0].detail}`
       : '',
     row.confidence !== 'High'
-      ? `Confidence is ${row.confidence.toLowerCase()} — ${row.confidenceReasons[0]}`
+      ? `Confidence is ${row.confidence.toLowerCase()}: ${lowerFirst(row.confidenceReasons[0])}`
       : '',
   ]
     .filter(Boolean)
