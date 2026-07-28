@@ -25,21 +25,21 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <header className="border-b border-border-subtle bg-surface">
           <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2 px-5 py-2.5">
             {/*
-              A co-brand lockup, not a claim of authorship: the app name, a hair
-              rule, then the Aries wordmark. The rule matters — set flush against
-              each other the two read as one title.
+              A co-brand lockup, not a claim of authorship: the Aries wordmark,
+              a hair rule, then the app name. The rule matters — set flush
+              against each other the two read as one title.
             */}
             <div className="flex items-center gap-2.5">
-              <Link href="/" className="text-[15px] font-semibold tracking-tight">
-                Renewal Prioritisation
-              </Link>
-              <span className="h-3.5 w-px bg-border-strong" aria-hidden />
               <span
                 className="aries-wordmark text-foreground/85"
                 role="img"
                 aria-label="Aries Global"
                 title="Case submission for Aries Global"
               />
+              <span className="h-3.5 w-px bg-border-strong" aria-hidden />
+              <Link href="/" className="text-[15px] font-semibold tracking-tight">
+                Renewal Prioritisation
+              </Link>
             </div>
             <SiteNav />
             <div className="ml-auto flex items-center gap-3">
