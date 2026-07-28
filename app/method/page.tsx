@@ -48,7 +48,7 @@ export default async function MethodPage() {
     .slice(0, 6);
 
   return (
-    <div className="flex max-w-4xl flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-[22px] font-semibold tracking-tight">How the score works</h1>
         <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-muted">
@@ -95,7 +95,7 @@ export default async function MethodPage() {
         </ol>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card eyebrow="Bands" title="What the number is called">
           <ul className="flex flex-col gap-2">
             {RISK_BANDS.map((b, i) => {

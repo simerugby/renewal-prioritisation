@@ -85,7 +85,7 @@ export function Card({
   return (
     <section className={`overflow-hidden rounded-lg border border-border-subtle bg-surface ${className}`}>
       {(title || subtitle || eyebrow) && (
-        <header className="border-b border-border-subtle bg-surface-2/40 px-4 py-3">
+        <header className="border-b border-border-subtle bg-surface-2 px-4 py-3">
           {eyebrow && (
             <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-2">{eyebrow}</p>
           )}
@@ -95,7 +95,7 @@ export function Card({
       )}
       <div className="px-4 py-4">{children}</div>
       {footnote && (
-        <footer className="border-t border-border-subtle px-4 py-2.5 text-[11px] leading-relaxed text-muted-2">
+        <footer className="border-t border-border-subtle bg-surface-2 px-4 py-2.5 text-[11px] leading-relaxed text-muted-2">
           {footnote}
         </footer>
       )}

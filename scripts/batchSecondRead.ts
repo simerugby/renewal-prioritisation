@@ -91,17 +91,14 @@ async function main() {
   await fs.writeFile(OUT, JSON.stringify(out, null, 2) + '\n', 'utf8');
 
   const byDirection: Record<string, number> = {};
-  let withChallenge = 0;
   let droppedTotal = 0;
   for (const r of Object.values(out)) {
     byDirection[r.direction] = (byDirection[r.direction] ?? 0) + 1;
-    if (r.fieldChallenge) withChallenge++;
     droppedTotal += r.dropped.length;
   }
 
   console.log(`\nWrote ${Object.keys(out).length}/${rows.length} results to data/second-read.json`);
   console.log('directions:', JSON.stringify(byDirection));
-  console.log(`field challenges proposed: ${withChallenge}`);
   console.log(`outputs dropped by validation: ${droppedTotal}`);
 }
 

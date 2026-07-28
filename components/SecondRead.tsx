@@ -161,25 +161,6 @@ export default function SecondRead({
         </ul>
       )}
 
-      {result.fieldChallenge && (
-        <div className="rounded border border-risk-elevated/30 bg-risk-elevated-bg px-3 py-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-risk-elevated">
-            A field may be out of date
-          </p>
-          <p className="tnum mt-1 text-[12px]">
-            {result.fieldChallenge.label}: {result.fieldChallenge.currentValue} &rarr;{' '}
-            {result.fieldChallenge.proposedValue}
-            {result.fieldChallenge.effectiveDate && (
-              <span className="text-muted"> (from {result.fieldChallenge.effectiveDate})</span>
-            )}
-          </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-muted">
-            Advisory. The score is not recalculated from this — a proposal is not a fact until someone
-            checks it.
-          </p>
-        </div>
-      )}
-
       {result.dropped.length > 0 && (
         <details className="rounded border border-dashed border-border-strong px-3 py-2">
           <summary className="cursor-pointer text-[11px] text-muted">
@@ -193,9 +174,10 @@ export default function SecondRead({
             ))}
           </ul>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted-2">
-            Shown deliberately. Across the whole book the validator rejects a meaningful share of what the
-            model proposes, and that is the clearest evidence the checks are load-bearing rather than
-            decorative.
+            Shown deliberately: an output the checks threw away is more informative than one that passed.
+            Across the supplied book this is currently empty, and that is worth knowing too — an earlier
+            batch showed 42 rejections, nineteen of which turned out to be a numbering bug in my own
+            prompt rather than anything the model got wrong.
           </p>
         </details>
       )}

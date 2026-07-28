@@ -30,7 +30,6 @@
  */
 
 import { SIGNAL_LABELS, type SignalKey } from './config';
-import { proposeCorrectionsByRule, validateCorrections, type Correction, type RawCorrection } from './corrections';
 import type { Customer, ScoredCustomer } from './types';
 
 /**
@@ -89,8 +88,6 @@ export interface SecondReadResult {
   explainsAWeakSignal: boolean;
   addsOpportunity: boolean;
   findings: Finding[];
-  /** A proposed change to a structured field, already validated. */
-  fieldChallenge: Correction | null;
   source: 'llm' | 'fallback' | 'precomputed';
   model?: string;
   generatedAt?: string;
@@ -124,7 +121,7 @@ export function buildSecondReadPrompt(row: ScoredCustomer): string {
 
   return [
     `ACCOUNT NOTE, split into numbered clauses. Refer to a clause by its number only.`,
-    ...clauses.map((c, i) => `[${i}] ${c}`),
+    ...clauses.map((c, i) => `[${i + 1}] ${c}`),
     ``,
     `SIGNALS THE SCORING MODEL ALREADY COUNTED (you cannot tell it anything it knows here):`,
     ...(fired.length ? fired.map((s) => `- ${s.label}: ${s.evidence}`) : ['- none of note']),
@@ -146,15 +143,13 @@ export function buildSecondReadPrompt(row: ScoredCustomer): string {
     `addsOpportunity: does any clause name expansion, more seats, more sites, or a growth conversation?`,
     ``,
     `Then list findings. Each cites ONE clause by number and says in one sentence what a customer success manager should take from it. Only set signalKey when the finding directly bears on one of the keys listed above; otherwise leave it null.`,
-    ``,
-    `If a clause shows a structured field is out of date, set fieldChallenge. Allowed fields: executiveSponsorStatus, invoiceStatus, renewalStage, renewalDate. If the clause names a future date for the change, put that date in effectiveDate as YYYY-MM-DD.`,
   ].join('\n');
 }
 
 export const SECOND_READ_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['addsRiskBeyondSignals', 'explainsAWeakSignal', 'addsOpportunity', 'findings', 'fieldChallenge'],
+  required: ['addsRiskBeyondSignals', 'explainsAWeakSignal', 'addsOpportunity', 'findings'],
   properties: {
     addsRiskBeyondSignals: { type: 'boolean' },
     explainsAWeakSignal: { type: 'boolean' },
@@ -166,21 +161,10 @@ export const SECOND_READ_SCHEMA = {
         additionalProperties: false,
         required: ['clauseIndex', 'signalKey', 'whatItMeans'],
         properties: {
-          clauseIndex: { type: 'integer', description: 'The number of the clause this finding cites.' },
+          clauseIndex: { type: 'integer', description: 'The number of the clause this finding cites, as printed in the note above. The first clause is 1.' },
           signalKey: { type: ['string', 'null'], description: 'One of the listed signal keys, or null.' },
           whatItMeans: { type: 'string', description: 'One sentence for a CSM. No preamble.' },
         },
-      },
-    },
-    fieldChallenge: {
-      type: ['object', 'null'],
-      additionalProperties: false,
-      required: ['field', 'proposedValue', 'clauseIndex', 'effectiveDate'],
-      properties: {
-        field: { type: 'string' },
-        proposedValue: { type: 'string' },
-        clauseIndex: { type: 'integer' },
-        effectiveDate: { type: ['string', 'null'] },
       },
     },
   },
@@ -191,7 +175,6 @@ interface RawSecondRead {
   explainsAWeakSignal?: boolean;
   addsOpportunity?: boolean;
   findings?: { clauseIndex?: number; signalKey?: string | null; whatItMeans?: string }[];
-  fieldChallenge?: { field?: string; proposedValue?: string; clauseIndex?: number; effectiveDate?: string | null } | null;
 }
 
 /**
@@ -211,7 +194,11 @@ export function validateSecondRead(row: ScoredCustomer, raw: RawSecondRead): Omi
 
   const findings: Finding[] = [];
   for (const f of raw?.findings ?? []) {
-    const idx = Number(f?.clauseIndex);
+    // The prompt numbers clauses from 1, so the model answers in 1-based terms.
+    // An earlier version numbered them from 0 and the model kept answering 1 for
+    // the first clause — nineteen of the forty-two validation rejections in the
+    // first full batch were that off-by-one, not a hallucination.
+    const idx = Number(f?.clauseIndex) - 1;
     if (!Number.isInteger(idx) || idx < 0 || idx >= clauses.length) {
       dropped.push(`A finding cited clause ${f?.clauseIndex}, which does not exist in this note.`);
       continue;
@@ -237,34 +224,12 @@ export function validateSecondRead(row: ScoredCustomer, raw: RawSecondRead): Omi
     });
   }
 
-  let fieldChallenge: Correction | null = null;
-  const fc = raw?.fieldChallenge;
-  if (fc?.field && fc?.proposedValue) {
-    const idx = Number(fc.clauseIndex);
-    const evidence = Number.isInteger(idx) && idx >= 0 && idx < clauses.length ? clauses[idx] : '';
-    if (!evidence) {
-      dropped.push(`A field challenge cited clause ${fc.clauseIndex}, which does not exist.`);
-    } else {
-      const rawCorrection: RawCorrection = {
-        field: fc.field,
-        proposedValue: fc.proposedValue,
-        effectiveDate: fc.effectiveDate ?? null,
-        evidence,
-        reasoning: 'Proposed from the account note.',
-      };
-      const { accepted, rejected } = validateCorrections(row.customer, [rawCorrection]);
-      fieldChallenge = accepted[0] ?? null;
-      for (const r of rejected) dropped.push(`Field challenge rejected: ${r.reason}`);
-    }
-  }
-
   return {
     direction,
     addsRiskBeyondSignals: addsRisk,
     explainsAWeakSignal: explains,
     addsOpportunity: opportunity,
     findings,
-    fieldChallenge,
     dropped,
   };
 }
@@ -317,7 +282,6 @@ export function buildFallbackSecondRead(row: ScoredCustomer, reason: string): Se
         ? 'adds-opportunity'
         : 'adds-nothing';
 
-  const { accepted } = validateCorrections(row.customer, proposeCorrectionsByRule(row.customer));
 
   const finalDirection = findings.length ? direction : 'adds-nothing';
   return {
@@ -326,7 +290,6 @@ export function buildFallbackSecondRead(row: ScoredCustomer, reason: string): Se
     explainsAWeakSignal: finalDirection === 'explains-a-weak-signal',
     addsOpportunity: finalDirection === 'adds-opportunity',
     findings,
-    fieldChallenge: accepted[0] ?? null,
     source: 'fallback',
     fallbackReason: reason,
     dropped: [],

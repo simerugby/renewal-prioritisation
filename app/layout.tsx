@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Geist, Geist_Mono } from 'next/font/google';
+import SiteNav from '@/components/SiteNav';
 import ThemeToggle, { ThemeScript } from '@/components/ThemeToggle';
 import { SNAPSHOT_DATE } from '@/lib/config';
 import './globals.css';
@@ -22,30 +23,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="min-h-full flex flex-col">
         <header className="border-b border-border-subtle bg-surface">
-          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
-            <Link href="/" className="text-[15px] font-semibold tracking-tight">
+          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2 px-5 py-2.5">
+            <Link href="/" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
               Renewal Prioritisation
             </Link>
-            <nav className="flex items-center gap-4 text-[13px] text-muted">
-              <Link href="/" className="transition-colors hover:text-foreground">
-                Portfolio
-              </Link>
-              <Link href="/method" className="transition-colors hover:text-foreground">
-                How the score works
-              </Link>
-              <Link href="/try" className="transition-colors hover:text-foreground">
-                Try your own data
-              </Link>
-            </nav>
+            <SiteNav />
             <div className="ml-auto flex items-center gap-3">
               {/*
                 The snapshot date sits in the chrome on every page, deliberately.
                 Every "days to renewal" in this app counts from here, not from
                 today, so the numbers reproduce whenever anyone opens it.
               */}
-              <span className="flex items-center gap-2 text-[12px] text-muted-2">
+              <span className="hidden items-center gap-1.5 rounded border border-border-subtle px-2 py-1 text-[11px] text-muted-2 sm:flex">
                 <span className="inline-block size-1.5 rounded-full bg-muted-2" aria-hidden />
-                Portfolio snapshot &mdash; {SNAPSHOT_DATE}
+                <span className="tnum">Snapshot {SNAPSHOT_DATE}</span>
               </span>
               <ThemeToggle />
             </div>

@@ -59,10 +59,11 @@ describe('splitClauses', () => {
 });
 
 describe('the prompt', () => {
-  it('numbers every clause so the model can point at one', () => {
+  it('numbers clauses from 1, because that is how a model counts', () => {
     const p = buildSecondReadPrompt(scored());
-    expect(p).toContain('[0]');
     expect(p).toContain('[1]');
+    expect(p).toContain('[2]');
+    expect(p).not.toContain('[0]');
   });
 
   // Independence: if the model knew the account scored 15/100 it would reason
@@ -87,8 +88,7 @@ describe('validateSecondRead', () => {
   it('renders the quote from the index, so a quote cannot be fabricated', () => {
     const out = validateSecondRead(row, {
       addsRiskBeyondSignals: true,
-      findings: [{ clauseIndex: 1, signalKey: null, whatItMeans: 'The sponsor is leaving.' }],
-      fieldChallenge: null,
+      findings: [{ clauseIndex: 2, signalKey: null, whatItMeans: 'The sponsor is leaving.' }],
     });
     const clauses = splitClauses(row.customer.customerNotes);
     expect(out.findings[0].quote).toBe(clauses[1]);
@@ -99,7 +99,6 @@ describe('validateSecondRead', () => {
     const out = validateSecondRead(row, {
       addsRiskBeyondSignals: true,
       findings: [{ clauseIndex: 99, signalKey: null, whatItMeans: 'Invented.' }],
-      fieldChallenge: null,
     });
     expect(out.findings).toHaveLength(0);
     expect(out.dropped.join(' ')).toContain('does not exist');
@@ -108,8 +107,7 @@ describe('validateSecondRead', () => {
   it('drops a finding with no explanation', () => {
     const out = validateSecondRead(row, {
       addsRiskBeyondSignals: true,
-      findings: [{ clauseIndex: 0, signalKey: null, whatItMeans: '  ' }],
-      fieldChallenge: null,
+      findings: [{ clauseIndex: 1, signalKey: null, whatItMeans: '  ' }],
     });
     expect(out.findings).toHaveLength(0);
   });
@@ -118,42 +116,35 @@ describe('validateSecondRead', () => {
   it('drops an attribution to a signal that did not fire, and keeps the finding', () => {
     const out = validateSecondRead(row, {
       addsRiskBeyondSignals: true,
-      findings: [{ clauseIndex: 0, signalKey: 'invoiceStatus', whatItMeans: 'Something.' }],
-      fieldChallenge: null,
+      findings: [{ clauseIndex: 1, signalKey: 'invoiceStatus', whatItMeans: 'Something.' }],
     });
     expect(out.findings).toHaveLength(1);
     expect(out.findings[0].signalKey).toBeNull();
     expect(out.dropped.join(' ')).toContain('did not contribute');
   });
 
-  it('rejects a field challenge naming a field that is not correctable', () => {
+
+
+
+  // Nineteen of forty-two rejections in the first full batch were this: clauses
+  // were numbered from 0 in the prompt and the model answered 1 for the first one.
+  it('accepts 1-based clause numbers, which is how the prompt presents them', () => {
+    const clauses = splitClauses(row.customer.customerNotes);
     const out = validateSecondRead(row, {
       addsRiskBeyondSignals: true,
-      findings: [],
-      fieldChallenge: { field: 'sponsorStatus', proposedValue: 'Left company', clauseIndex: 1, effectiveDate: null },
+      findings: [{ clauseIndex: 1, signalKey: null, whatItMeans: 'First clause.' }],
     });
-    expect(out.fieldChallenge).toBeNull();
-    expect(out.dropped.join(' ')).toContain('not a correctable field');
+    expect(out.findings).toHaveLength(1);
+    expect(out.findings[0].quote).toBe(clauses[0]);
+    expect(out.dropped).toHaveLength(0);
   });
 
-  it('rejects a field challenge with an invented enum value', () => {
+  it('rejects clause 0, which no longer exists in a 1-based scheme', () => {
     const out = validateSecondRead(row, {
       addsRiskBeyondSignals: true,
-      findings: [],
-      fieldChallenge: { field: 'invoiceStatus', proposedValue: 'Partially paid', clauseIndex: 0, effectiveDate: null },
+      findings: [{ clauseIndex: 0, signalKey: null, whatItMeans: 'Off the start.' }],
     });
-    expect(out.fieldChallenge).toBeNull();
-    expect(out.dropped.join(' ')).toContain('not a recognised value');
-  });
-
-  it('rejects a field challenge that changes nothing', () => {
-    const out = validateSecondRead(row, {
-      addsRiskBeyondSignals: false,
-      findings: [],
-      fieldChallenge: { field: 'invoiceStatus', proposedValue: 'Current', clauseIndex: 0, effectiveDate: null },
-    });
-    expect(out.fieldChallenge).toBeNull();
-    expect(out.dropped.join(' ')).toContain('already');
+    expect(out.findings).toHaveLength(0);
   });
 
   it('never throws on malformed model output', () => {

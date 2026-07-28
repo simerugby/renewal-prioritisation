@@ -1,5 +1,5 @@
 {
-  "CUST-1002": {
+  "CUST-1018": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
@@ -7,48 +7,16 @@
     "findings": [
       {
         "clauseIndex": 0,
-        "quote": "Rollout delays remain unresolved and procurement has requested a revised value case",
+        "quote": "The customer has paused 2 locations and requested a cancellation clause",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "There are unresolved issues with rollout and procurement is requesting a revised value case, indicating potential delays or negotiations."
+        "whatItMeans": "The customer has requested to cancel part of their contract, indicating a potential renewal risk."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"In discussion\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1003": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Procurement requested a consolidated vendor list",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Procurement's request for a consolidated vendor list may indicate a review or re-evaluation of vendors."
-      },
-      {
-        "clauseIndex": 1,
-        "quote": "the internal owner has not confirmed which tools will remain",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The internal owner has not confirmed which tools will remain, indicating potential uncertainty or change in tool usage."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Outreach scheduled\"."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1001": {
     "direction": "adds-risk",
@@ -61,16 +29,13 @@
         "quote": "New CFO has opened a budget review and the main sponsor left in June",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account has a new CFO and the main sponsor has left, which could impact renewal discussions."
+        "whatItMeans": "The account has a new CFO and a key sponsor has left, indicating potential changes in decision-making and account influence."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"Sponsor has left, needs update\" is not a recognised value for executiveSponsorStatus. Expected one of: Active, Inactive, Unknown, Left company."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1004": {
     "direction": "adds-risk",
@@ -83,18 +48,15 @@
         "quote": "No response to the last 3 emails and the former champion has left",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account has no recent contact and the previous champion has left, indicating a risk of disengagement."
+        "whatItMeans": "The account has been unresponsive and the main contact has left, indicating a risk of renewal failure."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Not started\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1018": {
+  "CUST-1002": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
@@ -102,21 +64,18 @@
     "findings": [
       {
         "clauseIndex": 0,
-        "quote": "The customer has paused 2 locations and requested a cancellation clause",
+        "quote": "Rollout delays remain unresolved and procurement has requested a revised value case",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The customer has requested a cancellation clause and paused locations, indicating a potential renewal risk."
+        "whatItMeans": "The renewal is delayed due to unresolved issues and a need for a revised value case, which could impact the renewal process."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "A field challenge cited clause 2, which does not exist."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1005": {
+  "CUST-1003": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
@@ -124,48 +83,42 @@
     "findings": [
       {
         "clauseIndex": 0,
-        "quote": "CSM handover completed in June",
+        "quote": "Procurement requested a consolidated vendor list",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The handover completion suggests recent account management activity."
+        "whatItMeans": "Procurement's request for a consolidated vendor list may indicate a procurement process or vendor review that could impact renewal."
       },
       {
         "clauseIndex": 1,
-        "quote": "the last QBR deck references 240 enabled users",
+        "quote": "the internal owner has not confirmed which tools will remain",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The last QBR indicates ongoing engagement and usage."
+        "whatItMeans": "The internal owner has not confirmed which tools will remain, indicating potential uncertainty or change in tool usage that could affect renewal planning."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Not started\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1036": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
-    "addsOpportunity": true,
+    "addsOpportunity": false,
     "findings": [
       {
         "clauseIndex": 0,
         "quote": "Headcount reductions have reduced the addressable user base",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account has a reduced user base due to headcount cuts, which may impact renewal value."
+        "whatItMeans": "Headcount reductions have decreased the potential user base, which may impact renewal value."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Not started\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1029": {
     "direction": "adds-risk",
@@ -178,46 +131,32 @@
         "quote": "A data migration issue remains open and finance has disputed the latest invoice",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "There is an unresolved data migration issue and a billing dispute that could delay renewal."
+        "whatItMeans": "There is an unresolved data migration issue and a billing dispute that could threaten renewal."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"Resolved dispute\" is not a recognised value for invoiceStatus. Expected one of: Current, Overdue, Disputed."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1020": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
+  "CUST-1005": {
+    "direction": "adds-opportunity",
+    "addsRiskBeyondSignals": false,
     "explainsAWeakSignal": false,
-    "addsOpportunity": false,
+    "addsOpportunity": true,
     "findings": [
       {
-        "clauseIndex": 0,
-        "quote": "The original project has ended and a new use case has not been agreed",
+        "clauseIndex": 1,
+        "quote": "the last QBR deck references 240 enabled users",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The project has ended and no new use case has been agreed, indicating a potential loss of current engagement."
+        "whatItMeans": "The account has a significant number of enabled users, which could support growth discussions."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 1, which does not exist in this note.",
-      "A field challenge cited clause 1, which does not exist."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1027": {
     "direction": "adds-risk",
@@ -230,24 +169,58 @@
         "quote": "A competing workflow tool is being trialled by the finance team",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "A competitor trial could threaten the renewal or indicate a shift in vendor preference."
+        "whatItMeans": "A competitor trial could divert the customer or introduce alternative solutions."
+      },
+      {
+        "clauseIndex": 0,
+        "quote": "A competing workflow tool is being trialled by the finance team",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The customer may be considering switching vendors or evaluating alternatives."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "A finding cited clause 1, which does not exist in this note.",
-      "A finding cited clause 2, which does not exist in this note.",
-      "A finding cited clause 3, which does not exist in this note.",
-      "A finding cited clause 4, which does not exist in this note.",
-      "A finding cited clause 5, which does not exist in this note.",
-      "A finding cited clause 6, which does not exist in this note.",
-      "A finding cited clause 7, which does not exist in this note.",
-      "A finding cited clause 8, which does not exist in this note.",
-      "A field challenge cited clause 2, which does not exist."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1038": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "The champion moved roles and usage is declining across 2 divisions",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The account is experiencing a decline in usage due to a role change, which may impact renewal."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1008": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The account's usage decline and lack of engagement are not explained by seasonal factors or known events."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1006": {
     "direction": "adds-risk",
@@ -260,92 +233,39 @@
         "quote": "Store closures reduced the user population",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Store closures have decreased the overall user base, which could impact renewal."
+        "whatItMeans": "Store closures have decreased the overall user base, which may impact renewal."
       },
       {
         "clauseIndex": 1,
         "quote": "a pilot in 2 remaining stores is above target and finance requested flexible pricing",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "A pilot in remaining stores is performing above target, and there is interest in flexible pricing, indicating potential for expansion or renewal negotiations."
+        "whatItMeans": "A pilot in remaining stores is performing well and could be expanded or scaled."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1008": {
+  "CUST-1020": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
-    "addsOpportunity": true,
+    "addsOpportunity": false,
     "findings": [
       {
         "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
+        "quote": "The original project has ended and a new use case has not been agreed",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account's usage decline and lack of engagement could threaten renewal."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "adoptionTrend",
-        "signalLabel": "Adoption trend",
-        "whatItMeans": "Adoption has decreased significantly, indicating potential disengagement."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "engagementRecency",
-        "signalLabel": "Engagement recency",
-        "whatItMeans": "Customer contact has been infrequent, which may impact renewal chances."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "stageReadiness",
-        "signalLabel": "Renewal process readiness",
-        "whatItMeans": "The renewal process is not yet started despite the approaching deadline."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "sponsorStatus",
-        "signalLabel": "Executive sponsor",
-        "whatItMeans": "The executive sponsor is inactive, reducing executive support."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "supportStrain",
-        "signalLabel": "Support strain",
-        "whatItMeans": "Support tickets are elevated, possibly indicating unresolved issues."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "sentiment",
-        "signalLabel": "Sentiment (NPS)",
-        "whatItMeans": "Negative NPS suggests dissatisfaction that could affect renewal."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Seasonal usage has fallen faster than expected and no QBR is scheduled",
-        "signalKey": "discountPressure",
-        "signalLabel": "Prior discount pressure",
-        "whatItMeans": "Previous discounting may set a precedent for future negotiations."
+        "whatItMeans": "The project has ended and no new use case has been agreed, which could threaten renewal."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Not started\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1025": {
     "direction": "adds-risk",
@@ -356,20 +276,17 @@
       {
         "clauseIndex": 1,
         "quote": "the original sponsor moves roles on 1 August and no replacement is recorded",
-        "signalKey": null,
-        "signalLabel": null,
+        "signalKey": "sponsorStatus",
+        "signalLabel": "Executive sponsor",
         "whatItMeans": "The original sponsor has moved roles, which could impact ongoing engagement or decision-making."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: executiveSponsorStatus is already \"Inactive\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1038": {
+  "CUST-1009": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
@@ -377,104 +294,23 @@
     "findings": [
       {
         "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
+        "quote": "Additional-seat pricing was requested in May",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account has experienced a decline in usage across two divisions, which could impact renewal."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "adoptionTrend",
-        "signalLabel": "Adoption trend",
-        "whatItMeans": "User adoption is decreasing, indicating potential engagement issues."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "stageReadiness",
-        "signalLabel": "Renewal process readiness",
-        "whatItMeans": "The renewal process is not as advanced as typical at this stage, suggesting a possible delay."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "engagementRecency",
-        "signalLabel": "Engagement recency",
-        "whatItMeans": "Customer contact has been infrequent, which may affect renewal likelihood."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "seatUtilisation",
-        "signalLabel": "Seat utilisation",
-        "whatItMeans": "Less than two-thirds of seats are active, indicating underutilization."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "sponsorStatus",
-        "signalLabel": "Executive sponsor",
-        "whatItMeans": "The executive sponsor is inactive, which could weaken renewal negotiations."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "supportStrain",
-        "signalLabel": "Support strain",
-        "whatItMeans": "Support tickets are relatively high, possibly indicating dissatisfaction or issues."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "sentiment",
-        "signalLabel": "Sentiment (NPS)",
-        "whatItMeans": "The low NPS score and time since last contact suggest declining customer sentiment."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "The champion moved roles and usage is declining across 2 divisions",
-        "signalKey": "discountPressure",
-        "signalLabel": "Prior discount pressure",
-        "whatItMeans": "Previous renewal involved a discount, which may set a lower expectation for pricing."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Outreach scheduled\"."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1033": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": true,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Usage usually falls during the seasonal shutdown",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Usage decline may be seasonal and not indicative of renewal risk."
+        "whatItMeans": "The customer requested additional seats, indicating potential growth."
       },
       {
         "clauseIndex": 1,
-        "quote": "a prior-year baseline is unavailable and the sponsor remains responsive",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The account remains responsive despite the lack of a prior-year baseline."
+        "quote": "finance disputes a professional-services charge and the order form is unsigned",
+        "signalKey": "invoiceStatus",
+        "signalLabel": "Billing status",
+        "whatItMeans": "There is a billing dispute related to a professional-services charge and an unsigned order form."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"In discussion\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1035": {
     "direction": "adds-risk",
@@ -487,74 +323,39 @@
         "quote": "A major incident is marked resolved",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The major incident being resolved reduces immediate risk."
+        "whatItMeans": "A major incident has been resolved, indicating recent issue resolution."
       },
       {
         "clauseIndex": 1,
         "quote": "the service-credit request remains open and adoption has not returned to the prior period",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The unresolved service-credit request and lack of adoption recovery indicate ongoing issues affecting renewal."
+        "whatItMeans": "The open service-credit request and lack of adoption recovery suggest ongoing dissatisfaction or unresolved issues."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"service-credit request status\" is not a correctable field."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1017": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
     "explainsAWeakSignal": false,
-    "addsOpportunity": true,
+    "addsOpportunity": false,
     "findings": [
       {
         "clauseIndex": 0,
         "quote": "Adoption is strong but an unresolved reporting defect is driving poor sentiment",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Adoption is strong, but unresolved issues with reporting could impact renewal sentiment."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "Adoption is strong but an unresolved reporting defect is driving poor sentiment",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The current support strain and sentiment issues are not fully explained by adoption status."
+        "whatItMeans": "Adoption is strong, but unresolved issues with reporting could lead to renewal risk."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"In discussion\"."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1009": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 1,
-        "quote": "finance disputes a professional-services charge and the order form is unsigned",
-        "signalKey": "invoiceStatus",
-        "signalLabel": "Billing status",
-        "whatItMeans": "The invoice dispute indicates a potential hold-up in the renewal process."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"Paid or resolved\" is not a recognised value for invoiceStatus. Expected one of: Current, Overdue, Disputed."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1010": {
     "direction": "adds-risk",
@@ -563,49 +364,24 @@
     "addsOpportunity": true,
     "findings": [
       {
-        "clauseIndex": 1,
-        "quote": "procurement separately requested a 15% reduction and the sponsor missed 2 calls",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The customer has experienced some engagement issues, such as missed calls and a request for a discount, which could impact renewal."
-      },
-      {
         "clauseIndex": 0,
         "quote": "Two departments joined discovery",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Two departments have joined discovery, indicating potential expansion or increased engagement."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"Commercial review\"."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1034": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": false,
-    "findings": [
+        "whatItMeans": "Two departments are engaging with discovery, indicating ongoing interest."
+      },
       {
         "clauseIndex": 1,
-        "quote": "the buyer has since asked to revisit warehouse-seat pricing and one invoice is overdue",
-        "signalKey": "invoiceStatus",
-        "signalLabel": "Billing status",
-        "whatItMeans": "The overdue invoice indicates a potential cash flow or billing issue that could threaten renewal."
+        "quote": "procurement separately requested a 15% reduction and the sponsor missed 2 calls",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "Procurement's request for a price reduction and missed calls suggest potential issues in engagement or budget discussions."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"Paid\" is not a recognised value for invoiceStatus. Expected one of: Current, Overdue, Disputed."
-    ],
+    "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1026": {
     "direction": "adds-risk",
@@ -618,43 +394,20 @@
         "quote": "the purchase order is still missing and an unrelated invoice is overdue",
         "signalKey": "invoiceStatus",
         "signalLabel": "Billing status",
-        "whatItMeans": "The overdue invoice indicates a potential delay in payment or renewal process."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"purchase order status\" is not a correctable field."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1022": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": false,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Migration drove most support volume",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Migration has increased support volume, which could impact support strain."
+        "whatItMeans": "The overdue invoice and missing PO could delay renewal or cause billing issues."
       },
       {
-        "clauseIndex": 1,
-        "quote": "engineering marked the critical incidents resolved while the sponsor requested a written remediation plan",
+        "clauseIndex": 0,
+        "quote": "Verbal commitment was logged 18 days ago",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Critical incidents have been resolved, but a remediation plan was requested, indicating ongoing issues."
+        "whatItMeans": "The verbal commitment indicates initial positive intent but is not a firm agreement."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1024": {
     "direction": "adds-risk",
@@ -667,56 +420,129 @@
         "quote": "No current NPS response and the commercial contact changed in July",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account has no recent NPS feedback and a change in commercial contact, which could impact renewal engagement."
+        "whatItMeans": "The account has not responded to NPS and the commercial contact changed recently, which could impact renewal discussions."
       },
       {
         "clauseIndex": 0,
         "quote": "No current NPS response and the commercial contact changed in July",
-        "signalKey": "adoptionTrend",
-        "signalLabel": "Adoption trend",
-        "whatItMeans": "Active user decline may indicate reduced product engagement."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "No current NPS response and the commercial contact changed in July",
-        "signalKey": "stageReadiness",
-        "signalLabel": "Renewal process readiness",
-        "whatItMeans": "The renewal process is not yet started and is significantly delayed."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "No current NPS response and the commercial contact changed in July",
-        "signalKey": "engagementRecency",
-        "signalLabel": "Engagement recency",
-        "whatItMeans": "Customer contact is over a month old, possibly reducing renewal influence."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "No current NPS response and the commercial contact changed in July",
-        "signalKey": "seatUtilisation",
-        "signalLabel": "Seat utilisation",
-        "whatItMeans": "Seat utilization is at 61%, which might suggest underuse or potential for expansion."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "No current NPS response and the commercial contact changed in July",
-        "signalKey": "supportStrain",
-        "signalLabel": "Support strain",
-        "whatItMeans": "Support tickets are low, indicating no current strain."
-      },
-      {
-        "clauseIndex": 0,
-        "quote": "No current NPS response and the commercial contact changed in July",
-        "signalKey": "discountPressure",
-        "signalLabel": "Prior discount pressure",
-        "whatItMeans": "Last renewal involved a 10% discount, which could pressure future pricing negotiations."
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The account's engagement and renewal process status suggest potential renewal risk."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1034": {
+    "direction": "adds-opportunity",
+    "addsRiskBeyondSignals": false,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": true,
+    "findings": [
+      {
+        "clauseIndex": 1,
+        "quote": "the buyer has since asked to revisit warehouse-seat pricing and one invoice is overdue",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The customer is requesting to review pricing and has an overdue invoice, indicating potential financial or negotiation issues."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1033": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": true,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Usage usually falls during the seasonal shutdown",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "Usage typically drops during seasonal shutdowns, which may explain the current decline."
+      },
+      {
+        "clauseIndex": 1,
+        "quote": "a prior-year baseline is unavailable and the sponsor remains responsive",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The lack of a baseline and ongoing responsiveness suggests stability but limited comparative data."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1007": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": true,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Security review is progressing but procurement expects a flat renewal",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The security review is ongoing, but procurement expects to renew at the current terms."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1022": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Migration drove most support volume",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "Migration is the main driver of support volume, indicating a possible transition phase."
+      },
+      {
+        "clauseIndex": 1,
+        "quote": "engineering marked the critical incidents resolved while the sponsor requested a written remediation plan",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "Critical incidents have been resolved, but a formal remediation plan has been requested, which could indicate ongoing concerns."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1028": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "The customer is satisfied but needs a non-profit pricing exception",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The customer is satisfied but requires a special pricing consideration due to their non-profit status."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1031": {
     "direction": "adds-opportunity",
@@ -729,107 +555,13 @@
         "quote": "Budget planning is underway and usage is stable across core teams",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account is currently stable with no immediate renewal threats."
+        "whatItMeans": "Budget planning is ongoing and usage remains stable, indicating no immediate renewal threat."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1007": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": false,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Security review is progressing but procurement expects a flat renewal",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The renewal process is ongoing but the customer expects a flat renewal fee."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"renewal in progress\" is not a recognised value for renewalStage. Expected one of: Not started, Outreach scheduled, In discussion, Commercial review, Verbal commitment."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1028": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "The customer is satisfied but needs a non-profit pricing exception",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Customer is satisfied but requires a non-profit pricing exception, which may involve a review or special approval."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: renewalStage is already \"In discussion\"."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1011": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Most tickets were opened during onboarding of a new team",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Most tickets were opened during onboarding, indicating initial setup activity."
-      },
-      {
-        "clauseIndex": 1,
-        "quote": "4 remain open and their business impact is not recorded",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Open tickets remain without recorded business impact, which could obscure issues."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1015": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": false,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Budget is confirmed but procurement timing may delay signature",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The budget is confirmed, but procurement delays may impact the renewal process."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"pending signature\" is not a recognised value for renewalStage. Expected one of: Not started, Outreach scheduled, In discussion, Commercial review, Verbal commitment."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1019": {
     "direction": "adds-nothing",
@@ -842,43 +574,13 @@
         "quote": "the latest legal redlines have no named owner on either side",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "There is a potential issue with the legal review as no owner is named, which could delay or complicate renewal."
+        "whatItMeans": "There is no current owner named on either side, which could delay or block renewal."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"legalOwner\" is not a correctable field."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1014": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "Analytics Hub evaluation is active",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Analytics Hub evaluation is ongoing, which may influence renewal discussions."
-      },
-      {
-        "clauseIndex": 1,
-        "quote": "account notes do not say whether it is a condition of the core renewal",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The account notes do not specify if the evaluation is a condition for renewal."
-      }
-    ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1013": {
     "direction": "adds-risk",
@@ -887,25 +589,17 @@
     "addsOpportunity": false,
     "findings": [
       {
-        "clauseIndex": 0,
-        "quote": "Internal approval is recorded in the CRM",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "Internal approval is documented, but this does not impact the current delay."
-      },
-      {
         "clauseIndex": 1,
         "quote": "the final PO has not arrived and the buyer has not replied for 9 days",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The PO delay and lack of response may indicate a stall or indecision in the renewal process."
+        "whatItMeans": "The renewal is delayed due to paperwork or PO issues, not necessarily a risk of cancellation."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1012": {
     "direction": "adds-risk",
@@ -918,41 +612,46 @@
         "quote": "Legal requested updated data-processing terms",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Legal is requesting updated data-processing terms, which may delay renewal."
+        "whatItMeans": "Legal is requesting updated data-processing terms, which could delay renewal negotiations."
       },
       {
         "clauseIndex": 1,
         "quote": "the customer's counsel is unavailable until late August",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The customer's counsel is unavailable until late August, potentially affecting legal review timelines."
+        "whatItMeans": "The customer's counsel is unavailable until late August, potentially postponing legal review and decision-making."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1037": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
+  "CUST-1030": {
+    "direction": "adds-opportunity",
+    "addsRiskBeyondSignals": false,
     "explainsAWeakSignal": false,
     "addsOpportunity": true,
     "findings": [
       {
         "clauseIndex": 0,
-        "quote": "A company-wide rollout is being explored while finance has paused new commitments until Q4",
+        "quote": "A successful pilot supports 40 more clinicians",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The company is considering a rollout that could increase usage or value."
+        "whatItMeans": "The account has a positive development with an expansion of clinicians, indicating growth potential."
+      },
+      {
+        "clauseIndex": 1,
+        "quote": "data-protection review for the added cohort has not started",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The data-protection review for the new cohort has not yet started, which could delay or complicate the expansion."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1040": {
     "direction": "adds-risk",
@@ -965,25 +664,69 @@
         "quote": "The sponsor requested a roadmap session",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The customer has requested a roadmap session, indicating engagement and planning activity."
+        "whatItMeans": "The customer has requested a roadmap session, indicating ongoing engagement and planning."
       },
       {
         "clauseIndex": 1,
         "quote": "procurement has not named a commercial lead",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Procurement has not assigned a commercial lead, which could delay decision-making or renewal processes."
+        "whatItMeans": "Procurement has not assigned a commercial lead, which could delay decision-making or indicate internal issues."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
-  "CUST-1021": {
+  "CUST-1037": {
     "direction": "adds-risk",
     "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "A company-wide rollout is being explored while finance has paused new commitments until Q4",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The account is considering a company-wide rollout, but current finance restrictions may delay renewal activities."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1014": {
+    "direction": "adds-opportunity",
+    "addsRiskBeyondSignals": false,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": true,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Analytics Hub evaluation is active",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The account is currently under evaluation, which may lead to renewal or change."
+      },
+      {
+        "clauseIndex": 1,
+        "quote": "account notes do not say whether it is a condition of the core renewal",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The notes do not specify if the evaluation is a condition affecting renewal."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1021": {
+    "direction": "adds-opportunity",
+    "addsRiskBeyondSignals": false,
     "explainsAWeakSignal": false,
     "addsOpportunity": true,
     "findings": [
@@ -992,65 +735,13 @@
         "quote": "Operations wants to extend the workflow to 3 additional depots",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Operations plans to expand the workflow to additional depots, indicating potential growth."
+        "whatItMeans": "Operations plans to expand the workflow to more depots, indicating potential growth."
       }
     ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"Pending expansion approval\" is not a recognised value for renewalStage. Expected one of: Not started, Outreach scheduled, In discussion, Commercial review, Verbal commitment."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1030": {
-    "direction": "adds-risk",
-    "addsRiskBeyondSignals": true,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "A successful pilot supports 40 more clinicians",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The pilot's success indicates potential for growth in clinician seats."
-      },
-      {
-        "clauseIndex": 1,
-        "quote": "data-protection review for the added cohort has not started",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "The data protection review for the new cohort has not yet been initiated, which could delay expansion."
-      }
-    ],
-    "fieldChallenge": null,
-    "dropped": [
-      "Field challenge rejected: \"pending review\" is not a recognised value for renewalStage. Expected one of: Not started, Outreach scheduled, In discussion, Commercial review, Verbal commitment."
-    ],
-    "source": "llm",
-    "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
-  },
-  "CUST-1023": {
-    "direction": "adds-opportunity",
-    "addsRiskBeyondSignals": false,
-    "explainsAWeakSignal": false,
-    "addsOpportunity": true,
-    "findings": [
-      {
-        "clauseIndex": 0,
-        "quote": "A second site is due to open before renewal",
-        "signalKey": null,
-        "signalLabel": null,
-        "whatItMeans": "A new site opening suggests potential for growth or additional needs."
-      }
-    ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1016": {
     "direction": "adds-opportunity",
@@ -1063,49 +754,84 @@
         "quote": "The analytics team has requested a product expansion workshop",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The account is considering a product expansion workshop, indicating potential growth."
+        "whatItMeans": "The customer is interested in expanding their product usage, indicating potential growth."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1011": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Most tickets were opened during onboarding of a new team",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "Most tickets are related to onboarding, indicating initial setup activity."
+      },
+      {
+        "clauseIndex": 1,
+        "quote": "4 remain open and their business impact is not recorded",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "Four support tickets remain open with unknown impact, which could indicate unresolved issues."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1039": {
-    "direction": "explains-a-weak-signal",
+    "direction": "adds-nothing",
     "addsRiskBeyondSignals": false,
-    "explainsAWeakSignal": true,
-    "addsOpportunity": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": false,
     "findings": [
       {
         "clauseIndex": 0,
         "quote": "Usage grew after the event schedule resumed",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "Usage increased after the event schedule resumed, indicating potential growth or renewed engagement."
+        "whatItMeans": "Usage increased after the event schedule resumed, indicating potential engagement or activity growth."
       },
       {
         "clauseIndex": 1,
         "quote": "the latest NPS predates the current support-ticket spike",
         "signalKey": null,
         "signalLabel": null,
-        "whatItMeans": "The recent NPS score is older than the spike in support tickets, so it may not reflect the current customer sentiment."
+        "whatItMeans": "The recent NPS score is older than the spike in support tickets, so it may not reflect current sentiment."
       }
     ],
-    "fieldChallenge": {
-      "field": "renewalDate",
-      "label": "Renewal date",
-      "currentValue": "2026-11-09",
-      "proposedValue": "2024-12-31",
-      "effectiveDate": "2024-12-31",
-      "evidence": "Usage grew after the event schedule resumed",
-      "reasoning": "Proposed from the account note."
-    },
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1023": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": true,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "A second site is due to open before renewal",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "A new site opening could lead to increased usage or a need for additional licenses."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   },
   "CUST-1032": {
     "direction": "adds-opportunity",
@@ -1121,10 +847,28 @@
         "whatItMeans": "The customer is interested in expanding their use of the product, which could lead to growth opportunities."
       }
     ],
-    "fieldChallenge": null,
     "dropped": [],
     "source": "llm",
     "model": "gpt-4.1-nano",
-    "generatedAt": "2026-07-28T11:02:53.640Z"
+    "generatedAt": "2026-07-28T13:03:31.481Z"
+  },
+  "CUST-1015": {
+    "direction": "adds-risk",
+    "addsRiskBeyondSignals": true,
+    "explainsAWeakSignal": false,
+    "addsOpportunity": true,
+    "findings": [
+      {
+        "clauseIndex": 0,
+        "quote": "Budget is confirmed but procurement timing may delay signature",
+        "signalKey": null,
+        "signalLabel": null,
+        "whatItMeans": "The budget is confirmed, but procurement delays could postpone the renewal process."
+      }
+    ],
+    "dropped": [],
+    "source": "llm",
+    "model": "gpt-4.1-nano",
+    "generatedAt": "2026-07-28T13:03:31.481Z"
   }
 }

@@ -1,108 +1,84 @@
 @import "tailwindcss";
 
 /*
-  Design tokens.
+  ============================================================================
+  PALETTE
+  ============================================================================
 
-  Risk colour is a four-step ramp, and it is never the only carrier of meaning —
-  every band is also spelled out in text, because a CSM triaging a renewal book
-  should not have to distinguish amber from red to know what to do.
+  Three rules, and every colour below follows them.
+
+  1. ONE DEFINITION PER TOKEN, BOTH MODES.
+     `light-dark()` carries the light and the dark value on the same line, so
+     the two themes cannot drift. This file used to hold the dark palette twice
+     — once under `prefers-color-scheme`, once under `[data-theme="dark"]` —
+     and every colour change had to be made in two places or it was only half
+     made. Now the selectors below set `color-scheme` and nothing else.
+
+  2. INK AND MARKS ARE DIFFERENT JOBS, SO THEY ARE DIFFERENT TOKENS.
+     Text has to clear 4.5:1 against its surface; a chart mark only has to clear
+     3:1, and in exchange it has to stay distinguishable from the mark beside it.
+     Those pull in opposite directions — the contrast floor pushes every ink
+     colour dark, which crushes them together in hue space. So `--viz-*` are
+     their own steps rather than a reuse of `--accent`, and the risk inks are
+     tuned for legibility rather than for separation.
+
+  3. SEVERITY IS NEVER CARRIED BY COLOUR ALONE.
+     Every band is spelled out in words next to its colour. This is what makes
+     rule 2 survivable: Critical and Elevated measure ΔE 9.1 apart in normal
+     vision, short of the 15 the validator wants, and they cannot get much
+     further apart while both are dark enough to read as text on white. The word
+     "Critical" closes that gap in a way no hue can.
+
+     They used to be orange and amber, ΔE 4.1 — the two bands a CSM most needs
+     to tell apart were the two hardest to. Critical is now red: conventional,
+     and more than twice the separation.
+
+  Checked with `node scripts/validate_palette.js` from the dataviz skill, both
+  modes, against each mode's own surface.
+  ============================================================================
 */
 :root {
-  --background: #fbfbfa;
-  --surface: #ffffff;
-  --surface-2: #f4f4f2;
-  --border: #e4e4e1;
-  --border-strong: #d0d0cc;
-  --foreground: #1a1a18;
-  --muted: #6b6b66;
-  --muted-2: #8f8f89;
-  --accent: #1f4fd8;
-  --accent-soft: #eef2ff;
+  color-scheme: light dark;
 
-  --risk-critical: #c2410c;
-  --risk-critical-bg: #fff1e9;
-  --risk-elevated: #b45309;
-  --risk-elevated-bg: #fef6e7;
-  /* Deliberately neutral, not green. "Watch" means keep an eye on this; a green
-     badge reads as "fine" and was making a 42-scoring, low-confidence account
-     look healthier than a 30-scoring one. Green is reserved for Stable. */
-  --risk-watch: #4b5563;
-  --risk-watch-bg: #f1f3f5;
-  --risk-stable: #047857;
-  --risk-stable-bg: #ecfdf5;
+  /* Surfaces and ink */
+  --background:    light-dark(#fbfbfa, #0d0d0f);
+  --surface:       light-dark(#ffffff, #151517);
+  --surface-2:     light-dark(#f4f4f2, #1d1d20);
+  --border:        light-dark(#e4e4e1, #2a2a2e);
+  --border-strong: light-dark(#d0d0cc, #3a3a40);
+  --foreground:    light-dark(#1a1a18, #ededeb);
+  --muted:         light-dark(#6b6b66, #9a9a94);
+  --muted-2:       light-dark(#8f8f89, #77776f);
+  --accent:        light-dark(#1f4fd8, #7f9cf5);
+  --accent-soft:   light-dark(#eef2ff, #1a1f36);
 
-  /* Chart marks. Stepped per mode rather than flipped, and validated in both:
-     all-pairs CVD separation, normal-vision floor, chroma and >=3:1 against the
-     surface. The UI accent failed the dark lightness band, so these are their
-     own tokens rather than a reuse of it. */
-  --viz-1: #2a78d6;
-  --viz-2: #eb6834;
-  --viz-grid: #e7e7e4;
-  --viz-axis: #9a9a94;
+  /* Risk bands: red, amber, neutral, green. Ordinal, not categorical. */
+  --risk-critical:    light-dark(#b91c1c, #f87171);
+  --risk-critical-bg: light-dark(#fef2f2, #2a1315);
+  --risk-elevated:    light-dark(#b45309, #fbbf24);
+  --risk-elevated-bg: light-dark(#fef6e7, #261c0c);
+  /* Watch is deliberately neutral, not green. Green reads as "fine", and it was
+     making a 42-scoring low-confidence account look healthier than a 30. */
+  --risk-watch:       light-dark(#4b5563, #9ca3af);
+  --risk-watch-bg:    light-dark(#f1f3f5, #1b1d21);
+  --risk-stable:      light-dark(#047857, #34d399);
+  --risk-stable-bg:   light-dark(#ecfdf5, #0d201a);
+
+  /* Chart marks. Stepped per mode rather than flipped: the UI accent fails the
+     dark-mode lightness band, so these are their own tokens. See rule 2. */
+  --viz-1:    light-dark(#2a78d6, #3987e5);
+  --viz-2:    light-dark(#eb6834, #d95926);
+  --viz-grid: light-dark(#e7e7e4, #26262a);
+  --viz-axis: light-dark(#9a9a94, #6b6b64);
 }
 
 /*
-  Dark mode is applied two ways, and the order matters.
-  - the media query is the default for someone who has never touched the toggle,
-    and it is scoped with :not([data-theme]) so an explicit choice always wins;
-  - the attribute selector is what the toggle sets, in both directions, so a
-    reader on a dark OS can force light and vice versa.
+  The toggle writes `data-theme`; with no attribute the OS preference wins.
+  These two rules are the whole of the theme switch — every colour above
+  follows `color-scheme` on its own.
 */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    --background: #0d0d0f;
-    --surface: #151517;
-    --surface-2: #1d1d20;
-    --border: #2a2a2e;
-    --border-strong: #3a3a40;
-    --foreground: #ededeb;
-    --muted: #9a9a94;
-    --muted-2: #77776f;
-    --accent: #7f9cf5;
-    --accent-soft: #1a1f36;
-
-    --risk-critical: #fb923c;
-    --risk-critical-bg: #2a1710;
-    --risk-elevated: #fbbf24;
-    --risk-elevated-bg: #261c0c;
-    --risk-watch: #9ca3af;
-    --risk-watch-bg: #1b1d21;
-    --risk-stable: #34d399;
-    --risk-stable-bg: #0d201a;
-
-    --viz-1: #3987e5;
-    --viz-2: #d95926;
-    --viz-grid: #26262a;
-    --viz-axis: #6b6b64;
-  }
-}
-
-:root[data-theme="dark"] {
-    --background: #0d0d0f;
-    --surface: #151517;
-    --surface-2: #1d1d20;
-    --border: #2a2a2e;
-    --border-strong: #3a3a40;
-    --foreground: #ededeb;
-    --muted: #9a9a94;
-    --muted-2: #77776f;
-    --accent: #7f9cf5;
-    --accent-soft: #1a1f36;
-
-    --risk-critical: #fb923c;
-    --risk-critical-bg: #2a1710;
-    --risk-elevated: #fbbf24;
-    --risk-elevated-bg: #261c0c;
-    --risk-watch: #9ca3af;
-    --risk-watch-bg: #1b1d21;
-    --risk-stable: #34d399;
-    --risk-stable-bg: #0d201a;
-
-    --viz-1: #3987e5;
-    --viz-2: #d95926;
-    --viz-grid: #26262a;
-    --viz-axis: #6b6b64;
-}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 
 @theme inline {
   --color-background: var(--background);
@@ -129,6 +105,18 @@
   --color-viz-axis: var(--viz-axis);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/*
+  Reserve the scrollbar track on every page.
+
+  Without this, navigating from a long page to a short one removes the
+  scrollbar and every element shifts sideways by its width — which reads as the
+  whole layout twitching. /try is short enough to trigger it; the portfolio and
+  method pages are not, which is why it only appeared on one route.
+*/
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
