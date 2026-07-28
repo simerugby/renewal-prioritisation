@@ -32,7 +32,7 @@ Other commands:
 |---|---|
 | `npm run verify` | Prints the full ranking, the confidence spread and the model's sanity checks. Every number in this README comes from here. |
 | `npm run eval` | The head-to-head behind the AI decision (see [finding 5](#5-the-rules-i-wrote-score-92-on-this-data-and-0-when-the-wording-changes)). Runs the model columns too if a key is set. |
-| `npm test` | 52 unit tests over the CSV edge cases, validation rules and scoring invariants. |
+| `npm test` | 103 tests: unit, property-based (thousands of generated portfolios), and a second company's export. |
 | `npm run smoke` | End-to-end checks against a running server: status codes, rendered content, AI failure paths. |
 | `npm run check` | Typecheck, lint, tests and verification in one command. |
 | `npm run build` | Production build. |
@@ -228,6 +228,37 @@ load and produce a ranking that changes between refreshes.
 - **Email or CRM integrations.** No system to integrate with, and a mocked one proves nothing.
 - **Charts beyond the inline bars.** The ranked list is the product. A scatter plot of risk against
   value was the one visual I genuinely wanted; it is the first thing I would add.
+- **A second AI feature.** The brief asks for one, so there is one. The three below are what I would
+  build next, and they are worth stating because they point the opposite way to where this usually goes.
+
+### AI at design time, not at runtime
+
+The obvious next move is to let a model check the ambiguous cases as they occur. I think that is the
+wrong shape: it puts an unreproducible call on every account forever, and it makes the system harder
+to explain to the person who has to defend a ranking. The same intelligence is worth more spent once,
+at the point a new company is onboarded.
+
+1. **A schema-mapping assistant.** Company number two arrives with `Part-paid` and `Legal review` in
+   columns this model has never seen — that is a real fixture in `lib/portability.test.ts`, and today
+   those values are correctly excluded and a human has to map them by hand. A model is good at
+   proposing that mapping. It proposes, a person approves, the result is written to `lib/config.ts`,
+   and **runtime stays pure arithmetic**. This is the only place the deterministic design is genuinely
+   worse for the user today.
+
+2. **Rule generation instead of rule execution.** Finding 5 shows the keyword scanner is a
+   transcription of one company's phrasing. Rather than calling a model for every account forever,
+   point it at a sample of the new company's notes and have it *propose the patterns*, reviewed by a
+   human. You buy the language understanding once, for pennies, instead of per-account indefinitely.
+
+3. **Drift monitoring.** `npm run eval` already compares rules against the model on a labelled set.
+   Run it weekly on a sample and alert when the gap crosses a threshold. That is a model auditing the
+   deterministic system, which is the useful direction — and it costs about a penny a week.
+
+4. **Score history.** The brief's binding constraint is that there are no historical renewal outcomes.
+   But a tool that runs weekly *creates* them: snapshot every score, and after two renewal cycles
+   there is finally something to validate the weights against. This is the single highest-value thing
+   missing, and it is deterministic. It is also what turns the measurement plan below from a promise
+   into a measurement.
 
 ---
 
@@ -255,6 +286,11 @@ them ranked in the top decile. If it did not, the weights are wrong and the whol
 rebuilding — and that is the first outcome data anyone will have. Until then every number here is a
 structured opinion, and the app is written to make that opinion easy to inspect and easy to argue
 with rather than easy to trust.
+
+That test needs one thing this does not yet do: **keep its own history.** The brief's binding
+constraint is that there are no historical renewal outcomes — but a tool that runs weekly creates
+them. Snapshotting every score is a small deterministic change and it is what converts everything
+above from a plan into an actual measurement. It is the first thing I would build.
 
 ---
 
@@ -296,10 +332,33 @@ whole book is held in memory. Tens of thousands of accounts are fine. Millions a
 answer there is to push scoring into the warehouse and serve pre-scored pages — which is the seam
 above, not a rewrite.
 
-**52 tests** (`npm test`) cover the CSV edge cases, the validation rules, and the scoring invariants
-that would otherwise fail silently: scores staying in range with missing inputs, re-normalisation
-keeping partially-scored accounts comparable, division-by-zero on empty books, and renewals in the
-past. `npm run check` runs typecheck, lint, tests and the verification harness together.
+**103 tests, and the ones that matter are not the hand-written ones.** Example tests only check cases
+the author thought of, which on a 40-row file is a weak claim. `lib/properties.test.ts` uses
+`fast-check` to generate thousands of portfolios per run — unmapped enums, negative ARR, dates
+centuries apart, lone surrogates, empty books, duplicate ids — and asserts invariants that must hold
+for *any* input: the risk score is always finite and in range, priority is never negative, the
+evidence panel's contributions always sum to the headline number, ranks are always a permutation of
+1..n.
+
+It found three defects in the first run, and all three were the silent kind:
+
+| Found | Why it mattered |
+|---|---|
+| A trailing comma produced two columns named `""`, and assigning by name meant the second **overwrote the first** — `id,name,,` + `1,bob,x,y` parsed to `{id:"1", name:"bob", "":"y"}` and `x` vanished | Excel writes trailing commas by default. No error was raised anywhere |
+| `scoreAll` keyed its risk ranking by customer id, so duplicate ids **collapsed to one rank** | The ranking quietly stopped being a ranking |
+| An unquoted comma inside free text truncated the note and dropped the rest | The most common CSV defect there is, and it was invisible |
+
+`lib/portability.test.ts` is the other half: **a second company's export**, written to be awkward in
+the ways a real one is — BOM, CRLF, trailing commas, unquoted commas in notes, enum values this model
+has never seen, no NPS columns at all, an SMB book two orders of magnitude smaller, a duplicate id, a
+`15/09/2026` date and a renewal already in the past. Five accounts load, two quarantine, every
+unmapped value is reported by name, and the value axis rescales to the smaller book.
+
+It also asserts the promise that **fails**: the note scanner does not recognise *"practice manager
+retiring in sept"* as a sponsor loss. That limitation is now a test, so it cannot quietly stop being
+true.
+
+`npm run check` runs typecheck, lint, tests and the verification harness together.
 
 **What does not port** is the keyword scanner. Finding 5 measured exactly how badly — 0% — and that is
 the honest boundary between the part of this that is a system and the part that is a transcription of
