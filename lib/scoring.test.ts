@@ -159,11 +159,29 @@ describe('missing and stale signals', () => {
     expect(gappy.confidence).not.toBe('High');
   });
 
-  it('lowers confidence when usage data is stale, without changing risk inputs', () => {
+  it('mild usage staleness costs confidence but still scores the usage signals', () => {
     const fresh = score({ usageDataLastSyncedAt: '2026-07-20' });
+    const mild = score({ usageDataLastSyncedAt: '2026-07-05' }); // 16 days: past warn, inside exclude
+    expect(mild.riskScore).toBeCloseTo(fresh.riskScore);
+    expect(mild.confidence).not.toBe('High');
+    expect(mild.signals.find((s) => s.key === 'adoptionTrend')!.normalised).not.toBeNull();
+  });
+
+  // Both usage signals read the same feed, so they age together. A 30-day-stale
+  // "last 30 days" window describes a period that closed before the snapshot —
+  // the same reason a 238-day-old NPS is excluded.
+  it('excludes both usage signals once the feed is older than the exclude threshold', () => {
     const stale = score({ usageDataLastSyncedAt: '2026-06-01' });
-    expect(stale.riskScore).toBeCloseTo(fresh.riskScore);
-    expect(stale.confidence).not.toBe('High');
+    expect(stale.signals.find((s) => s.key === 'adoptionTrend')!.normalised).toBeNull();
+    expect(stale.signals.find((s) => s.key === 'seatUtilisation')!.normalised).toBeNull();
+    expect(stale.modelCoverage).toBeLessThan(0.75);
+    expect(stale.confidence).toBe('Low');
+  });
+
+  it('keeps a stale-usage account on the same 0-100 scale as a fresh one', () => {
+    const stale = score({ usageDataLastSyncedAt: '2026-06-01', invoiceStatus: 'Disputed' });
+    expect(stale.riskScore).toBeGreaterThan(0);
+    expect(stale.riskScore).toBeLessThanOrEqual(100);
   });
 });
 

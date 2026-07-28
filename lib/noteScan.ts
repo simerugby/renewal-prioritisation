@@ -33,11 +33,40 @@ interface Rule {
  * designed to expose: a CRM with different note conventions breaks these rules
  * and does not break the LLM.
  */
+/**
+ * A note on how these are written, because it is the difference between a rule
+ * that is merely weak and one that is dangerous.
+ *
+ * A false NEGATIVE costs a missed flag. The score is unaffected, the account
+ * keeps its rank, and the AI brief catches it when a key is configured. That is
+ * a degradation.
+ *
+ * A false POSITIVE puts a confident, wrong statement in front of a CSM — and can
+ * fire a playbook rule. That is the only way anything in this system can assert
+ * something untrue, so the patterns are written to fail toward silence:
+ *
+ *  - No bare stem matches. `/\bterminat/i` hits "terminate the trial period"
+ *    and "termination of the pilot", neither of which is a renewal exit signal.
+ *  - No direction-ambiguous phrases. "above target" was matching as an expansion
+ *    cue and appears just as naturally in "churn is above target".
+ *  - Negations are anchored to a subject. "has not started" alone matches "the
+ *    seasonal decline has not started", which means the opposite of a blocker.
+ *
+ * Every flag also renders the sentence that triggered it, so a wrong match is
+ * visible to the reader rather than hidden behind a label.
+ */
 const RULES: Rule[] = [
   {
     key: 'exit-signal',
     label: 'Exit signal',
-    patterns: [/cancellation clause/i, /\bterminat/i, /\bnot renew/i, /wind[- ]down/i],
+    patterns: [
+      /cancellation clause/i,
+      /break (clause|option)/i,
+      /terminat(e|ing|ion)[^.]{0,25}(contract|agreement|subscription|service|renewal)/i,
+      /(will |do |does )?not (be )?renew(ing)?\b/i,
+      /wind[- ]down/i,
+      /notice of (cancellation|termination)/i,
+    ],
   },
   {
     key: 'sponsor-loss',
@@ -62,10 +91,17 @@ const RULES: Rule[] = [
     key: 'paperwork-stuck',
     label: 'Paperwork stalled',
     patterns: [
-      /(purchase order|PO)[^.]{0,30}\b(missing|not arrived|outstanding)/i,
-      /order form[^.]{0,20}unsigned/i,
-      /\bunsigned\b/i,
-      /has not replied/i,
+      /(purchase order|\bPO\b)[^.]{0,30}\b(missing|not arrived|outstanding|not issued|still awaited)/i,
+      // Grammatical, not proximity-based. A window of "document … unsigned"
+      // happily matched "the contract is signed; the unsigned draft copies were
+      // destroyed" — the two words were close together and the meaning was the
+      // opposite. Requiring the document to BE the subject of "is unsigned"
+      // fixes that specific case; it does not make the approach sound, which is
+      // the point lib/noteScan.test.ts is there to keep visible.
+      /(order form|contract|agreement|paperwork)s?\s+(is|are|was|were|remains?)\s+(still\s+)?unsigned/i,
+      /\bunsigned\s+(order form|contract|agreement)/i,
+      /(buyer|customer|contact|they)[^.]{0,20}has not replied/i,
+      /awaiting signature/i,
     ],
   },
   {
@@ -97,23 +133,27 @@ const RULES: Rule[] = [
     label: 'Blocker with no named owner',
     patterns: [
       /no named owner/i,
-      /has not (named|confirmed)/i,
-      /not (been )?(agreed|recorded|confirmed)/i,
-      /unavailable until/i,
-      /has not started/i,
+      /(has|have) not (named|confirmed|nominated)/i,
+      // Anchored to a thing that ought to have happened. Unanchored, "has not
+      // started" matches "the seasonal decline has not started", which is good news.
+      /(review|process|rollout|migration|onboarding|evaluation|conversation|assessment)[^.]{0,25}(has|have) not (started|begun)/i,
+      /(has|have) not (been )?(agreed|recorded|confirmed)/i,
+      /(counsel|legal|owner|sponsor|lead)[^.]{0,25}unavailable until/i,
+      /do(es)? not say whether/i,
     ],
   },
   {
     key: 'expansion',
     label: 'Expansion opportunity',
     patterns: [
-      /expansion/i,
-      /more (licences|licenses|seats|clinicians)/i,
-      /additional (depots|seats|sites)/i,
-      /second site/i,
+      /expansion (workshop|opportunity|discussion)|product expansion/i,
+      /more (licences|licenses|seats|users|clinicians)/i,
+      /additional (depots|seats|sites|licences|licenses|users)/i,
+      /(second|new) site (is )?(due|opening|to open)/i,
       /company-wide rollout/i,
-      /above target/i,
+      /(pilot|trial)[^.]{0,25}above target/i,
       /joined discovery/i,
+      /supports \d+ more/i,
     ],
   },
   {

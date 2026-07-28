@@ -43,8 +43,9 @@ Other commands:
 
 **Northstar Logistics** — £210,000, renewing in 18 days, and the only account where every axis agrees.
 Active users fell 48% in a month (612 → 318), the invoice is disputed, the sponsor left in June, there
-has been no contact for 71 days, and the renewal process has not started. It ranks first on risk and
-first on priority.
+has been no contact for 71 days, and the renewal process has not started. It ranks **first on
+priority**, and second on risk — behind a £12,000 account that is in even worse shape and should still
+not be the first call. That gap is finding 2.
 
 Then: **Meridian Health Systems** (£180k, usage −38%, four critical tickets), **Lantern Hospitality**
 (£68k, has asked for a cancellation clause), **Atlas Manufacturing** (£140k, caught in a vendor
@@ -96,10 +97,16 @@ adoption at 18 and sentiment at 5, halves the sentiment weight past 45 days, and
 past 120 days** — which excludes 7 accounts' NPS from scoring altogether.
 
 Excluded signals are not scored as zero. Their weight is removed and the remaining signals
-re-normalise, so an account measured on 81% of the model still sits on the same 0–100 scale as one
+re-normalise, so an account measured on 51% of the model still sits on the same 0–100 scale as one
 measured on 100%. What staleness costs is **confidence**, which is displayed separately and never
 folded into the risk number. The honest response to a 238-day-old data point is a wider band, not a
 smaller number.
+
+The same rule applies to usage, not just sentiment — one rule for stale inputs rather than a special
+case for NPS. **Stonebridge Education** (£95,000, renewing in 25 days) had its usage feed last synced
+33 days before the snapshot, so its "last 30 days" figures describe a window that closed a month
+earlier. Both usage signals are excluded. It is scored on **51% of the model**, marked Low confidence,
+and the app says so on the account page rather than presenting a confident 46.
 
 ### 4. "Verbal commitment" is not a safe stage — three of the four are stuck on money
 
@@ -118,7 +125,7 @@ The app does not resolve this. Picking a side would invent a fact, and either re
 stale one. It flags the pair as a contradiction, **lowers confidence, leaves the risk score alone**,
 and puts the two records side by side so a human can settle it with one phone call.
 
-### 5. The rules I wrote score 92% on this data and 0% when the wording changes
+### 5. The rules I wrote score 95% on this data and 7% when the wording changes
 
 The scoring model reads nine structured columns. It cannot read `customer_notes`, and that column
 carries facts that change the answer.
@@ -130,8 +137,8 @@ and no replacement is recorded."* Nothing in the structured data knows this.
 
 Before reaching for a model I wrote a keyword scanner and measured it, because "an LLM would be better
 here" is an assertion until it is tested. Against 38 hand-labelled note risks in the supplied file it
-caught **35 (92%)** with zero false positives — which looked like an argument for deleting the API
-call.
+caught **36 of 38 (95%)** with zero false positives — which looked like an argument for deleting the
+API call.
 
 That number is contaminated. **I wrote those regexes after reading all forty notes**, so it measures
 how well I transcribed a corpus I had already read. So I rewrote 14 of the same facts the way another
@@ -140,13 +147,25 @@ up"* — and re-ran:
 
 | | supplied notes | same facts, reworded |
 |---|---|---|
-| Keyword rules | 35/38 — **92%** | 0/14 — **0%** |
+| Keyword rules | 36/38 — **95%** | 1/14 — **7%** |
 
 Both figures are biased and I wrote both sets; the second is unfair to the rules in exactly the way
 the first is generous to them. What they agree on is the finding: **the rules encode one company's
 writing conventions, not the meaning.** That is a transfer problem, and it is precisely what would
 break the day this pointed at a second company. It is the reason the AI call exists, and it is
 reproducible with `npm run eval`.
+
+**The failure that actually worries me is the other direction.** A missed flag costs a flag. A *wrong*
+flag puts a confident false statement in front of a CSM and can fire a playbook rule. `lib/noteScan.test.ts`
+holds adversarial cases for exactly that, and one of them is worth quoting because I could not fix it
+by tightening: *"The contract is signed; the unsigned draft copies were destroyed."* My first pattern
+matched a document noun near the word "unsigned"; the two words were four apart and the meaning was
+the opposite. Requiring the document to be the grammatical subject of "is unsigned" fixed that
+sentence — and would not fix the next one. **Patterns match tokens; only a reader gets the meaning.**
+
+So the design constraint is that a note flag can never quietly assert anything: it cannot move the
+risk score, it cannot change a rank, and it always renders the exact sentence that triggered it, so a
+wrong match is visible in the same glance as the claim.
 
 ---
 
@@ -157,7 +176,7 @@ reproducible with `npm run eval`.
 | **A transparent additive rubric, not a model** | There are no historical renewal outcomes in the file. There is nothing to fit and nothing to validate against, so a fitted model would be a confident-looking number with no evidence underneath it. The brief says the same thing from the other side: no churn probabilities. | Any claim to predictive accuracy. In exchange every point is inspectable and arguable. |
 | **Two axes, never blended** | "Risk *and* commercial priority" is two questions. Finding 2 is what happens when you answer them with one number. | Two numbers to explain instead of one. The `vs risk` column pays that cost. |
 | **Confidence is a third, separate output** | Folding staleness into the score silently converts a guess into a measurement. | Users read two things. It is the only treatment of stale data that does not quietly lie. |
-| **Stale signals are dropped and the model re-normalises** | A 238-day-old NPS is not evidence about today. Zeroing its weight keeps accounts comparable and makes "% of model applied" an honest headline. | An account scored on 81% of the model is not strictly comparable to one on 100%. That figure is therefore shown, not hidden. |
+| **Stale signals are dropped and the model re-normalises** | A 238-day-old NPS is not evidence about today, and neither is a usage window that closed a month before the snapshot. Zeroing the weight keeps accounts comparable and makes "% of model applied" an honest headline. | An account scored on 51% of the model is not strictly comparable to one on 100%. That figure is therefore shown, not hidden. |
 | **Contradictions lower confidence, never risk** | Three of four verbal commitments contradict their billing record. Resolving that silently, in either direction, invents a fact. | The app declines to answer the hardest cases. That is the answer. |
 | **Next action chosen by decision table** | Routing attention is a small, knowable answer space. A rule can be read, argued with and corrected; a generated action cannot. | Less fluent phrasing than a model would produce. |
 | **Exactly one LLM call, and it cannot move a number** | Finding 5. The score is computed server-side and passed to the model as read-only context; the response is advisory and rendered in its own panel. An unreproducible output must not reorder a work queue. | The insight is ignorable. Correct. |

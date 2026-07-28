@@ -13,8 +13,14 @@ export function parseCsv(text: string): Record<string, string>[] {
   let field = '';
   let inQuotes = false;
 
+  // Strip a UTF-8 byte order mark. Excel writes one by default, and without this
+  // the first header becomes "﻿customer_id", which does not match
+  // "customer_id" — so the single most common real-world export would fail
+  // validation on its most important column.
+  const withoutBom = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+
   // Normalise line endings so a CRLF file from Windows parses identically.
-  const src = text.replace(/\r\n?/g, '\n');
+  const src = withoutBom.replace(/\r\n?/g, '\n');
 
   for (let i = 0; i < src.length; i++) {
     const c = src[i];

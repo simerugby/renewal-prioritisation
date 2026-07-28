@@ -77,6 +77,119 @@ export const SIGNAL_RATIONALE: Record<SignalKey, string> = {
     'A heavily discounted last renewal is a standing signal of price pressure and weak perceived value.',
 };
 
+/**
+ * RESPONSE CURVES.
+ *
+ * Piecewise-linear control points, read as [input, risk] where risk runs 0 (fine)
+ * to 1 (worst). They live here rather than in the engine because they are the
+ * most company-specific judgement in the whole model: what counts as a steep
+ * usage decline, or a long silence, is a property of the book being worked, not
+ * of renewals in general.
+ *
+ * Every one is a considered guess. There are no historical renewal outcomes in
+ * this dataset, so none has been fitted to or validated against an outcome.
+ */
+export const CURVES = {
+  /** Month-on-month change in active users. A 25% drop is worth ~two thirds of the weight. */
+  adoptionTrend: [
+    [-0.4, 1],
+    [-0.25, 0.65],
+    [-0.1, 0.3],
+    [0, 0.05],
+    [0.1, 0],
+  ] as [number, number][],
+
+  /** Share of purchased seats in active use. */
+  seatUtilisation: [
+    [0.15, 1],
+    [0.35, 0.75],
+    [0.5, 0.45],
+    [0.75, 0.05],
+    [0.9, 0],
+  ] as [number, number][],
+
+  /** Days since the last recorded customer contact. */
+  engagementRecency: [
+    [7, 0],
+    [21, 0.2],
+    [45, 0.6],
+    [75, 0.9],
+    [110, 1],
+  ] as [number, number][],
+
+  /**
+   * How far along the renewal process *ought* to be, given days remaining.
+   * Compared against the stage actually reached; only being behind counts.
+   */
+  expectedStageProgress: [
+    [20, 1],
+    [45, 0.75],
+    [75, 0.5],
+    [110, 0.25],
+  ] as [number, number][],
+
+  /** Critical tickets in 90 days. */
+  criticalTickets: [
+    [0, 0],
+    [1, 0.35],
+    [2, 0.65],
+    [4, 1],
+  ] as [number, number][],
+
+  /** All support tickets in 90 days, per 100 purchased seats. */
+  ticketsPer100Seats: [
+    [0.5, 0],
+    [2, 0.4],
+    [5, 0.8],
+    [10, 1],
+  ] as [number, number][],
+
+  /** Discount given at the last renewal, as a percentage. */
+  discountPressure: [
+    [0, 0],
+    [10, 0.35],
+    [20, 0.8],
+    [25, 1],
+  ] as [number, number][],
+
+  /**
+   * How much a renewal's distance discounts its priority. Extends past a year
+   * so a book with long horizons does not flatten into a single urgency.
+   */
+  urgency: [
+    [0, 1],
+    [30, 1],
+    [60, 0.8],
+    [90, 0.6],
+    [180, 0.4],
+    [365, 0.25],
+  ] as [number, number][],
+} as const;
+
+/** How the two support-strain components combine. Severity outweighs volume. */
+export const SUPPORT_STRAIN_MIX = { critical: 0.7, volume: 0.3 } as const;
+
+/**
+ * The largest process gap that can occur (`Not started` at under 20 days), used
+ * to put the stage-readiness signal on the same 0..1 scale as the others.
+ */
+export const MAX_STAGE_GAP = 0.75;
+
+/** NPS runs -100..100; this maps it onto 0..1 risk. */
+export const NPS_RISK = { midpoint: 50, divisor: 2, scale: 100 } as const;
+
+/** Weight multiplier applied to an NPS response that is fresh vs merely usable. */
+export const NPS_AGE_WEIGHTING = { fresh: 1, aging: 0.5 } as const;
+
+/** Model coverage below these fractions costs a confidence penalty each. */
+export const CONFIDENCE_COVERAGE_THRESHOLDS = [0.95, 0.9] as const;
+
+/** Penalty points mapping onto a confidence level. */
+export const CONFIDENCE_LEVEL_CUTOFFS = { high: 0, medium: 2 } as const;
+
+/** An NPS at or above this is "users are happy", for contradiction detection. */
+export const HEALTHY_NPS_THRESHOLD = 30;
+
 /** A signal older than this contributes nothing and reduces confidence instead. */
 export const STALENESS = {
   /** NPS at full weight up to here. */
@@ -87,6 +200,13 @@ export const STALENESS = {
   usageWarnDays: 7,
   /** Usage sync older than this costs confidence twice. */
   usageStaleDays: 20,
+  /**
+   * Usage sync older than this excludes the usage-derived signals entirely.
+   * A "last 30 days" window synced 33 days ago describes a period that closed a
+   * month before the snapshot. Treated the same way as a stale NPS, so the model
+   * has one rule for stale inputs rather than a special case for sentiment.
+   */
+  usageExcludeDays: 30,
 } as const;
 
 /**

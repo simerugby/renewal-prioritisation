@@ -19,7 +19,15 @@
  */
 
 import {
+  CONFIDENCE_COVERAGE_THRESHOLDS,
+  CONFIDENCE_LEVEL_CUTOFFS,
+  CURVES,
   deriveArrReference,
+  HEALTHY_NPS_THRESHOLD,
+  MAX_STAGE_GAP,
+  NPS_AGE_WEIGHTING,
+  NPS_RISK,
+  SUPPORT_STRAIN_MIX,
   INVOICE_RISK,
   RISK_BANDS,
   SIGNAL_LABELS,
@@ -64,7 +72,12 @@ export function daysBetween(fromIso: string, toIso: string): number {
 
 const pct = (n: number) => `${n > 0 ? '+' : ''}${n.toFixed(1)}%`;
 
-function computeSignals(c: Customer, asOf: string, daysToRenewal: number): SignalResult[] {
+function computeSignals(
+  c: Customer,
+  asOf: string,
+  daysToRenewal: number,
+  usageAgeDays: number,
+): SignalResult[] {
   const out: SignalResult[] = [];
   const push = (
     key: SignalKey,
@@ -87,23 +100,28 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
     });
   };
 
+  // Both usage signals come from the same feed, so they age together. A "last 30
+  // days" window that was last synced 33 days ago describes a period that ended
+  // a month before the snapshot — that is not evidence about today, for the same
+  // reason a 238-day-old NPS is not. Excluding it keeps the treatment of stale
+  // inputs consistent instead of special-casing sentiment.
+  const usageStale = usageAgeDays > STALENESS.usageExcludeDays;
+  const staleNote = `Usage feed last synced ${usageAgeDays} days before the snapshot, so this describes a window that had already closed.`;
+
   // --- Adoption trend -------------------------------------------------------
   const trend =
     c.activeUsersPrevious30d > 0
       ? (c.activeUsers30d - c.activeUsersPrevious30d) / c.activeUsersPrevious30d
       : 0;
-  push(
-    'adoptionTrend',
-    band(trend, [
-      [-0.5, 1],
-      [-0.4, 1],
-      [-0.25, 0.65],
-      [-0.1, 0.3],
-      [0, 0.05],
-      [0.1, 0],
-    ]),
-    `Active users ${pct(trend * 100)} versus the prior 30 days (${c.activeUsersPrevious30d} to ${c.activeUsers30d}).`,
-  );
+  if (usageStale) {
+    push('adoptionTrend', null, `Active users ${pct(trend * 100)} versus the prior 30 days, as of the last sync.`, staleNote);
+  } else {
+    push(
+      'adoptionTrend',
+      band(trend, CURVES.adoptionTrend),
+      `Active users ${pct(trend * 100)} versus the prior 30 days (${c.activeUsersPrevious30d} to ${c.activeUsers30d}).`,
+    );
+  }
 
   // --- Renewal process readiness -------------------------------------------
   // Compares how far the renewal has actually progressed against how far it
@@ -118,16 +136,11 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
       'Unrecognised stage — cannot be placed on the process timeline.',
     );
   } else {
-    const expected = band(daysToRenewal, [
-      [20, 1],
-      [45, 0.75],
-      [75, 0.5],
-      [110, 0.25],
-    ]);
+    const expected = band(daysToRenewal, CURVES.expectedStageProgress);
     const gap = Math.max(0, expected - actual);
     push(
       'stageReadiness',
-      Math.min(1, gap / 0.75),
+      Math.min(1, gap / MAX_STAGE_GAP),
       `Stage is "${c.renewalStage}" with ${daysToRenewal} days to renewal; at this range the process would normally be ${Math.round(expected * 100)}% advanced.`,
     );
   }
@@ -138,13 +151,7 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   } else {
     push(
       'engagementRecency',
-      band(c.daysSinceLastCustomerEngagement, [
-        [7, 0],
-        [21, 0.2],
-        [45, 0.6],
-        [75, 0.9],
-        [110, 1],
-      ]),
+      band(c.daysSinceLastCustomerEngagement, CURVES.engagementRecency),
       `${c.daysSinceLastCustomerEngagement} days since the last recorded customer contact.`,
     );
   }
@@ -154,17 +161,15 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   // seat expansion not yet reflected in billing) must not produce a utilisation
   // above 100% and a nonsensical negative risk.
   const util = c.seatsPurchased > 0 ? Math.min(1, c.activeUsers30d / c.seatsPurchased) : 0;
-  push(
-    'seatUtilisation',
-    band(util, [
-      [0.15, 1],
-      [0.35, 0.75],
-      [0.5, 0.45],
-      [0.75, 0.05],
-      [0.9, 0],
-    ]),
-    `${c.activeUsers30d} of ${c.seatsPurchased} purchased seats active (${Math.round(util * 100)}%).`,
-  );
+  if (usageStale) {
+    push('seatUtilisation', null, `${c.activeUsers30d} of ${c.seatsPurchased} seats active at the last sync.`, staleNote);
+  } else {
+    push(
+      'seatUtilisation',
+      band(util, CURVES.seatUtilisation),
+      `${c.activeUsers30d} of ${c.seatsPurchased} purchased seats active (${Math.round(util * 100)}%).`,
+    );
+  }
 
   // --- Executive sponsor ----------------------------------------------------
   // "Unknown" is a real value in this schema and carries real risk, so it scores.
@@ -190,20 +195,8 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   // --- Support strain -------------------------------------------------------
   const per100 = c.seatsPurchased > 0 ? (c.supportTickets90d / c.seatsPurchased) * 100 : 0;
   const strain =
-    0.7 *
-      band(c.criticalSupportTickets90d, [
-        [0, 0],
-        [1, 0.35],
-        [2, 0.65],
-        [4, 1],
-      ]) +
-    0.3 *
-      band(per100, [
-        [0.5, 0],
-        [2, 0.4],
-        [5, 0.8],
-        [10, 1],
-      ]);
+    SUPPORT_STRAIN_MIX.critical * band(c.criticalSupportTickets90d, CURVES.criticalTickets) +
+    SUPPORT_STRAIN_MIX.volume * band(per100, CURVES.ticketsPer100Seats);
   push(
     'supportStrain',
     strain,
@@ -230,10 +223,10 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
       `Older than the ${STALENESS.npsUsableDays}-day limit, so it is excluded from the score.`,
     );
   } else {
-    const scale = npsAge <= STALENESS.npsFreshDays ? 1 : 0.5;
+    const scale = npsAge <= STALENESS.npsFreshDays ? NPS_AGE_WEIGHTING.fresh : NPS_AGE_WEIGHTING.aging;
     push(
       'sentiment',
-      (50 - c.npsScore / 2) / 100,
+      (NPS_RISK.midpoint - c.npsScore / NPS_RISK.divisor) / NPS_RISK.scale,
       `NPS ${c.npsScore}, responded ${npsAge} days ago${scale < 1 ? ' — counted at half weight for age' : ''}.`,
       undefined,
       scale,
@@ -243,12 +236,7 @@ function computeSignals(c: Customer, asOf: string, daysToRenewal: number): Signa
   // --- Prior discount pressure ---------------------------------------------
   push(
     'discountPressure',
-    band(c.lastRenewalDiscountPct, [
-      [0, 0],
-      [10, 0.35],
-      [20, 0.8],
-      [25, 1],
-    ]),
+    band(c.lastRenewalDiscountPct, CURVES.discountPressure),
     `Last renewal closed at a ${c.lastRenewalDiscountPct}% discount.`,
   );
 
@@ -270,7 +258,11 @@ function detectContradictions(c: Customer, signals: SignalResult[]): Contradicti
     });
   }
 
-  if (c.npsScore !== null && c.npsScore >= 30 && (c.executiveSponsorStatus === 'Left company' || c.executiveSponsorStatus === 'Inactive')) {
+  if (
+    c.npsScore !== null &&
+    c.npsScore >= HEALTHY_NPS_THRESHOLD &&
+    (c.executiveSponsorStatus === 'Left company' || c.executiveSponsorStatus === 'Inactive')
+  ) {
     found.push({
       key: 'sentiment-vs-sponsor',
       summary: 'Users are happy, the sponsor is not there',
@@ -314,11 +306,11 @@ function computeConfidence(
   const reasons: string[] = [];
   let penalty = 0;
 
-  if (coverage < 0.95) {
+  if (coverage < CONFIDENCE_COVERAGE_THRESHOLDS[0]) {
     penalty += 1;
     reasons.push(`Only ${Math.round(coverage * 100)}% of the model's weight could be applied.`);
   }
-  if (coverage < 0.9) penalty += 1;
+  if (coverage < CONFIDENCE_COVERAGE_THRESHOLDS[1]) penalty += 1;
 
   if (usageAgeDays > STALENESS.usageWarnDays) {
     penalty += 1;
@@ -343,7 +335,8 @@ function computeConfidence(
 
   if (reasons.length === 0) reasons.push('All signals present and synced within a day of the snapshot.');
 
-  const level: ConfidenceLevel = penalty === 0 ? 'High' : penalty <= 2 ? 'Medium' : 'Low';
+  const level: ConfidenceLevel =
+    penalty <= CONFIDENCE_LEVEL_CUTOFFS.high ? 'High' : penalty <= CONFIDENCE_LEVEL_CUTOFFS.medium ? 'Medium' : 'Low';
   return { level, reasons };
 }
 
@@ -366,7 +359,8 @@ export function scoreCustomer(
   ctx: ScoringContext,
 ): Omit<ScoredCustomer, 'priorityRank' | 'riskOnlyRank'> {
   const daysToRenewal = daysBetween(asOf, c.renewalDate);
-  const signals = computeSignals(c, asOf, daysToRenewal);
+  const usageDataAgeDays = daysBetween(c.usageDataLastSyncedAt, asOf);
+  const signals = computeSignals(c, asOf, daysToRenewal, usageDataAgeDays);
 
   // Re-normalise over the weight we could actually apply, so an account missing
   // a signal is still scored on the same 0-100 scale as one that has everything.
@@ -380,7 +374,6 @@ export function scoreCustomer(
   }
 
   const modelCoverage = appliedWeight / totalWeight;
-  const usageDataAgeDays = daysBetween(c.usageDataLastSyncedAt, asOf);
   const npsAgeDays = c.npsResponseDate ? daysBetween(c.npsResponseDate, asOf) : null;
 
   const contradictions = detectContradictions(c, signals);
@@ -393,20 +386,17 @@ export function scoreCustomer(
   // PRIORITY. Risk answers "is this bad"; priority answers "where does the next
   // hour go". A 90-risk account worth GBP 12k does not outrank a 60-risk account
   // worth GBP 210k, and the value floor stops small accounts vanishing entirely.
-  const valueWeight =
-    VALUE_FLOOR + (1 - VALUE_FLOOR) * Math.min(1, c.arrGbp / Math.max(1, ctx.arrReference));
+  // Clamped at both ends. A credit note or a data error can put a negative ARR
+  // in an export; unclamped that produces a value weight below the floor and a
+  // negative priority score, which sorts an account to the bottom of the queue
+  // for being *expensive*.
+  const valueRatio = Math.max(0, Math.min(1, c.arrGbp / Math.max(1, ctx.arrReference)));
+  const valueWeight = VALUE_FLOOR + (1 - VALUE_FLOOR) * valueRatio;
 
   // Urgency is unbounded on the right: a book with renewals two years out must
   // not have them treated the same as one 130 days out, which a fixed final
   // control point would do.
-  const urgency = band(daysToRenewal, [
-    [0, 1],
-    [30, 1],
-    [60, 0.8],
-    [90, 0.6],
-    [180, 0.4],
-    [365, 0.25],
-  ]);
+  const urgency = band(daysToRenewal, CURVES.urgency);
   const priorityScore = riskScore * valueWeight * urgency;
 
   const noteFlags = scanNotes(c.customerNotes);
