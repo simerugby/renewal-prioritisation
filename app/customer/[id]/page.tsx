@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import AiBrief from '@/components/AiBrief';
+import SecondRead from '@/components/SecondRead';
 import DecisionRecorder from '@/components/DecisionRecorder';
 import EvidencePanel from '@/components/EvidencePanel';
 import { Card, ConfidenceBadge, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
 import { loadCustomer } from '@/lib/data';
-import { MATERIAL_NOTE_FLAGS } from '@/lib/brief';
+import { MATERIAL_NOTE_FLAGS } from '@/lib/secondRead';
 
 /**
  * Rendered per request rather than pre-generated, for two reasons.
@@ -209,8 +209,8 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             <p className="mt-2 text-[12px] leading-relaxed text-muted">{row.playbook.rationale}</p>
           </Card>
 
-          <Card title="AI account brief" subtitle="The one place this product calls a model.">
-            <AiBrief customerId={c.customerId} />
+          <Card title="Second read" subtitle="The one place this product calls a model. It reads the note; it does not touch the score.">
+            <SecondRead customerId={c.customerId} />
           </Card>
 
           <Card title="Decide and record" subtitle="What happens next, and who owns it.">

@@ -159,11 +159,32 @@ export function validateCorrections(
   return { accepted, rejected };
 }
 
-/** Apply approved corrections to produce the customer the engine will score. */
-export function applyCorrections(customer: Customer, corrections: Correction[]): Customer {
-  if (corrections.length === 0) return customer;
+/**
+ * A correction dated after the snapshot has not happened yet.
+ *
+ * The bug this exists to stop: the note on the largest account in the book says
+ * "the original sponsor moves roles on 1 August". Proposing
+ * `executiveSponsorStatus: Inactive -> Left company` with no date asserts, on a
+ * snapshot dated 2026-07-21, that a person who leaves in eleven days has
+ * already gone. That is a false statement of fact, and it would have shipped.
+ *
+ * A future-dated correction is still worth showing — it is exactly the kind of
+ * thing a CSM should act on before it lands — but it must be labelled as
+ * pending and must not be applied to the score.
+ */
+export function isPending(c: Correction, asOf: string): boolean {
+  return c.effectiveDate !== null && c.effectiveDate > asOf;
+}
+
+/**
+ * Apply approved corrections to produce the customer the engine will score.
+ * Pending (future-dated) corrections are deliberately skipped.
+ */
+export function applyCorrections(customer: Customer, corrections: Correction[], asOf?: string): Customer {
+  const effective = asOf ? corrections.filter((c) => !isPending(c, asOf)) : corrections;
+  if (effective.length === 0) return customer;
   const next = { ...customer };
-  for (const c of corrections) {
+  for (const c of effective) {
     // Narrow, field by field, so this cannot write an arbitrary key.
     if (c.field === 'executiveSponsorStatus') next.executiveSponsorStatus = c.proposedValue as Customer['executiveSponsorStatus'];
     else if (c.field === 'invoiceStatus') next.invoiceStatus = c.proposedValue as Customer['invoiceStatus'];
@@ -182,6 +203,26 @@ export function applyCorrections(customer: Customer, corrections: Correction[]):
  * differently. That gap is the whole argument for the model, and shipping this
  * alongside it is what makes the argument checkable rather than asserted.
  */
+const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+
+/**
+ * Pull a date out of a clause like "moves roles on 1 August".
+ *
+ * The year is the snapshot's, rolling forward if the month has already passed —
+ * account notes almost never state a year, and a bare "1 August" written in
+ * July means this year.
+ */
+export function extractFutureDate(clause: string, asOf = '2026-07-21'): string | null {
+  const m = clause.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\b/i);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = MONTHS.indexOf(m[2].toLowerCase()) + 1;
+  if (!day || !month || day > 31) return null;
+  const year = Number(asOf.slice(0, 4));
+  const iso = (y: number) => `${y}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return iso(month < Number(asOf.slice(5, 7)) ? year + 1 : year);
+}
+
 export function proposeCorrectionsByRule(customer: Customer): RawCorrection[] {
   const note = customer.customerNotes ?? '';
   const out: RawCorrection[] = [];
@@ -190,10 +231,15 @@ export function proposeCorrectionsByRule(customer: Customer): RawCorrection[] {
 
   const sponsorGone = /(sponsor|champion)[^.]{0,40}\b(left|leaving|departed|moved roles|moves roles)/i;
   if (sponsorGone.test(note) && customer.executiveSponsorStatus !== 'Left company') {
+    const clause = sentence(sponsorGone);
     out.push({
       field: 'executiveSponsorStatus',
       proposedValue: 'Left company',
-      evidence: sentence(sponsorGone),
+      // Present tense with a future date ("moves roles on 1 August") is a
+      // departure that has not happened. Carry the date so the correction is
+      // shown as pending rather than asserted as already true.
+      effectiveDate: extractFutureDate(clause),
+      evidence: clause,
       reasoning: 'The note reports the sponsor leaving or changing role, but the field does not say so.',
     });
   }

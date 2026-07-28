@@ -2,6 +2,7 @@ import Link from 'next/link';
 import DataQualityBanner from '@/components/DataQualityBanner';
 import PortfolioTable from '@/components/PortfolioTable';
 import PriorityScatter from '@/components/PriorityScatter';
+import { MATERIAL_NOTE_FLAGS } from '@/lib/secondRead';
 import { Card, EmptyState, ErrorState, RiskPill, Stat, gbp } from '@/components/ui';
 import { DataLoadError, loadPortfolio, type Portfolio } from '@/lib/data';
 
@@ -43,6 +44,17 @@ export default async function PortfolioPage() {
   const needsAttention = rows.filter((r) => r.riskBand === 'Critical' || r.riskBand === 'Elevated');
   const lowConfidence = rows.filter((r) => r.confidence !== 'High');
   const top = rows[0];
+
+  // The accounts a purely quantitative queue never reaches: the score is calm
+  // and the account note is not. Deterministic on purpose — the keyword scanner
+  // produces a usable list here, and the model, tuned to the recall needed to
+  // catch the flagship account, flags 22 of 27 calm accounts. Measured, not
+  // assumed: `npm run eval:beyond`.
+  const quietButFlagged = rows.filter(
+    (r) =>
+      (r.riskBand === 'Stable' || r.riskBand === 'Watch') &&
+      r.noteFlags.some((f) => MATERIAL_NOTE_FLAGS.includes(f.key)),
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -98,6 +110,39 @@ export default async function PortfolioPage() {
               <p className="mt-1 text-[12px] leading-relaxed text-muted">{top.playbook.rationale}</p>
             </div>
           </div>
+        </Card>
+      )}
+
+      {quietButFlagged.length > 0 && (
+        <Card
+          title="The score is calm; the note is not"
+          subtitle="Every scored signal on these accounts sits in a normal range, and the free-text note says otherwise. A risk-sorted queue never reaches them."
+        >
+          <p className="tnum text-[13px]">
+            <span className="font-semibold">{quietButFlagged.length} accounts</span>
+            <span className="text-muted"> · </span>
+            <span className="font-semibold">{gbp(quietButFlagged.reduce((s, r) => s + r.customer.arrGbp, 0))}</span>
+            <span className="text-muted">
+              {' '}at priority ranks {Math.min(...quietButFlagged.map((r) => r.priorityRank))}&ndash;
+              {Math.max(...quietButFlagged.map((r) => r.priorityRank))}
+            </span>
+          </p>
+          <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
+            {quietButFlagged.map((r) => (
+              <Link
+                key={r.customer.customerId}
+                href={`/customer/${r.customer.customerId}`}
+                className="hover:text-accent hover:underline"
+              >
+                {r.customer.customerName}
+                <span className="tnum text-muted-2"> #{r.priorityRank}</span>
+              </Link>
+            ))}
+          </p>
+          <p className="mt-2.5 text-[11px] leading-relaxed text-muted-2">
+            Use the <span className="text-muted">Note disagrees</span> filter on the table below to work
+            this list. Open any of them to run a second read of the note.
+          </p>
         </Card>
       )}
 

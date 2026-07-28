@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { MATERIAL_NOTE_FLAGS } from '@/lib/brief';
+import { MATERIAL_NOTE_FLAGS } from '@/lib/secondRead';
 import type { ScoredCustomer } from '@/lib/types';
 import { ConfidenceBadge, EmptyState, RiskPill, gbp } from './ui';
 
@@ -78,6 +78,7 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
   const [horizon, setHorizon] = useState<string>('all');
   const [sort, setSort] = useState<SortKey>('priority');
   const [needsAttentionOnly, setNeedsAttentionOnly] = useState(false);
+  const [noteDisagreesOnly, setNoteDisagreesOnly] = useState(false);
 
   const csms = useMemo(() => uniq(rows.map((r) => r.customer.csmName)), [rows]);
   const segments = useMemo(() => uniq(rows.map((r) => r.customer.segment)), [rows]);
@@ -96,6 +97,7 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
       if (stage !== 'all' && c.renewalStage !== stage) return false;
       if (!h.test(r.daysToRenewal)) return false;
       if (needsAttentionOnly && r.riskBand !== 'Critical' && r.riskBand !== 'Elevated') return false;
+      if (noteDisagreesOnly && !isQuietButFlagged(r)) return false;
       return true;
     });
 
@@ -115,14 +117,14 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
       }
     });
     return sorted;
-  }, [rows, query, csm, segment, region, stage, horizon, sort, needsAttentionOnly]);
+  }, [rows, query, csm, segment, region, stage, horizon, sort, needsAttentionOnly, noteDisagreesOnly]);
 
   const selectClass =
     'rounded border border-border-subtle bg-surface px-2 py-1.5 text-[12px] text-foreground hover:border-border-strong focus:outline-none';
 
   const filteredArr = filtered.reduce((s, r) => s + r.customer.arrGbp, 0);
   const anyFilter =
-    query !== '' || csm !== 'all' || segment !== 'all' || region !== 'all' || stage !== 'all' || horizon !== 'all' || needsAttentionOnly;
+    query !== '' || csm !== 'all' || segment !== 'all' || region !== 'all' || stage !== 'all' || horizon !== 'all' || needsAttentionOnly || noteDisagreesOnly;
 
   const reset = () => {
     setQuery('');
@@ -132,6 +134,7 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
     setStage('all');
     setHorizon('all');
     setNeedsAttentionOnly(false);
+    setNoteDisagreesOnly(false);
   };
 
   return (
@@ -202,6 +205,19 @@ export default function PortfolioTable({ rows }: { rows: ScoredCustomer[] }) {
             className="accent-[var(--accent)]"
           />
           Needs attention
+        </label>
+
+        <label
+          className="flex cursor-pointer items-center gap-1.5 text-[12px] text-muted"
+          title="Accounts whose scored signals are calm and whose account note is not. A risk-sorted queue never reaches these."
+        >
+          <input
+            type="checkbox"
+            checked={noteDisagreesOnly}
+            onChange={(e) => setNoteDisagreesOnly(e.target.checked)}
+            className="accent-[var(--accent)]"
+          />
+          Note disagrees
         </label>
 
         <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={`${selectClass} ml-auto`} aria-label="Sort by">
