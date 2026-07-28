@@ -17,7 +17,8 @@
     "secret-scan": "bash scripts/secret-scan.sh",
     "second-read:batch": "tsx scripts/batchSecondRead.ts",
     "eval:beyond": "tsx eval/runBeyondEval.ts",
-    "eval:cross": "tsx eval/runCrossCompanyEval.ts"
+    "eval:cross": "tsx eval/runCrossCompanyEval.ts",
+    "sensitivity": "tsx scripts/sensitivity.ts"
   },
   "dependencies": {
     "next": "16.2.12",

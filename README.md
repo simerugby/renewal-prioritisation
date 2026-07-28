@@ -208,6 +208,41 @@ wrong match is visible in the same glance as the claim.
 
 ---
 
+## Are the weights arbitrary? I tested it rather than asserting
+
+The obvious objection to a hand-built rubric is that the ranking is an artefact of numbers I invented.
+That is testable without any outcome data: jitter every weight and see whether the answer survives.
+`npm run sensitivity` does it with a fixed seed, so the figures below reproduce exactly.
+
+**Perturbation — every one of the nine weights randomly moved by up to ±40%, 1,000 times:**
+
+| | Held across trials |
+|---|---|
+| Same account at #1 | **100%** |
+| Same accounts in the top 3 | 99.8% |
+| Same accounts in the top 5 | **100%** |
+| Same accounts in the top 10 | **100%** |
+
+**Ablation — delete each signal entirely and re-rank:** the top 5 is unchanged in all nine cases.
+Removing adoption trend, the heaviest signal at 18 of 100, does not move it. Northstar and Oakwell are
+not top-ranked because of how I weighted anything; they are extreme on six signals at once.
+
+**And the half of the result that is less flattering, which is the reason to run it at all:**
+
+| Where an account starts | How far it moves under the same jitter |
+|---|---|
+| Ranks 1–5 | mean **0.03** places, worst 1 |
+| Ranks 6–15 | mean 0.29, worst 3 |
+| **Ranks 16–30** | mean 0.77, **worst 6** |
+| Ranks 31–40 | mean 0.28, worst 2 |
+
+So the ends of the list are a genuine ordering and **the middle is not**. An account at #22 could
+reasonably be at #18 or #28, and presenting that as a precise position would be false precision from a
+model that has no outcome data to justify it. The product consequence: treat the top ten as an order
+and the rest as a band. That is stated on the method page rather than left for a reader to discover.
+
+---
+
 ## Three columns I did not score, and the evidence for each
 
 The file has 25 columns. Nine are scored, several are identity or filters, and three carry numbers I

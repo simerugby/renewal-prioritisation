@@ -107,6 +107,24 @@ export default async function MethodPage() {
         </p>
       </Card>
 
+      <Card
+        title="How much to trust the order"
+        subtitle="Measured by perturbing every weight by up to ±40%, a thousand times, and re-ranking. Reproduce with npm run sensitivity."
+      >
+        <p className="text-[12px] leading-relaxed text-muted">
+          The same accounts hold the top five in <span className="text-foreground">100%</span> of those
+          trials, and removing any single signal entirely does not change them. The accounts at the top
+          are not there because of how the weights were set; they are extreme on several signals at once.
+        </p>
+        <p className="mt-2 text-[12px] leading-relaxed text-muted">
+          The middle of the list is a different matter. An account starting between ranks 16 and 30 moves
+          an average of 0.8 places and as much as{' '}
+          <span className="text-foreground">6 places</span> under the same jitter.{' '}
+          <span className="text-foreground">Treat the top ten as an ordering and the rest as a band.</span>{' '}
+          Reading a difference between #22 and #18 is reading noise.
+        </p>
+      </Card>
+
       <Card title="What this is not">
         <ul className="flex list-disc flex-col gap-2 pl-4 text-[12px] leading-relaxed text-muted">
           <li>
