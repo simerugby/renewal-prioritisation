@@ -137,6 +137,14 @@ async function main() {
     `  spread across the book       ${(Math.min(...stick) * 100).toFixed(1)}% to ${(Math.max(...stick) * 100).toFixed(1)}%  (${((Math.max(...stick) - Math.min(...stick)) * 100).toFixed(1)} points)`,
   );
   console.log(`  correlation with seat util   ${corr(stick, util).toFixed(2)} — mostly re-measures a signal already scored`);
+  const adoption = withWau.map((r) =>
+    r.customer.activeUsersPrevious30d > 0
+      ? (r.customer.activeUsers30d - r.customer.activeUsersPrevious30d) / r.customer.activeUsersPrevious30d
+      : 0,
+  );
+  console.log(`  correlation with risk score  ${corr(stick, withWau.map((r) => r.riskScore)).toFixed(2)}`);
+  console.log(`  correlation with adoption    ${corr(stick, adoption).toFixed(2)}`);
+  console.log(`  seat util vs adoption        ${corr(util, adoption).toFixed(2)} — both read active_users_30d`);
 
   console.log('contract_term_months');
   // The column is nullable now, so correlate over the rows that actually have a

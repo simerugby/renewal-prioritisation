@@ -337,7 +337,8 @@ The trap is measuring engagement. A CSM opening the tool daily proves nothing.
 - **Coverage of the near-term book**, meaning accounts renewing within 45 days with a recorded decision.
   Today four accounts worth £385,000 sit at *Not started*; that should go to zero.
 - **Override rate on suggested actions.** Near 0% means the CSM is rubber-stamping and has stopped
-  reading. Near 100% means the rules are wrong. Around 20–30% means a useful default being reviewed.
+  reading. Near 100% means the rules are wrong. I would start by watching whether it settles
+  anywhere off both rails.
 
 **Lagging, two renewal cycles**
 

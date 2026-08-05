@@ -227,8 +227,10 @@ book.
 customer id rendered the right "no such account" page under an HTTP **200**. `notFound()` cannot set a
 status once a response has begun streaming, and a `loading.tsx` anywhere above a route is what starts
 it. The fix was to scope the skeleton to the portfolio page with a route group, leaving the account
-route unwrapped. `npm run smoke` asserts both behaviours against a running server: status codes,
-rendered content, and the AI endpoint's failure paths.
+route unwrapped. The cost is that the account route has no loading skeleton at all; that is accepted
+because the book is parsed and scored behind a short-lived in-process cache, so the per-request
+render is near-instant. `npm run smoke` asserts both behaviours against a running server: status
+codes, rendered content, and the AI endpoint's failure paths.
 
 **Scale, honestly.** Scoring is O(n) with roughly forty arithmetic operations per account and the
 whole book is held in memory. Tens of thousands of accounts are fine. Millions are not, and the right

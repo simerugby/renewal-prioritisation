@@ -190,6 +190,12 @@ export const CONFIDENCE_LEVEL_CUTOFFS = { high: 0, medium: 2 } as const;
 /** An NPS at or above this is "users are happy", for contradiction detection. */
 export const HEALTHY_NPS_THRESHOLD = 30;
 
+/** An NPS below this is "sentiment is negative", for contradiction detection. */
+export const NEGATIVE_NPS_THRESHOLD = 0;
+
+/** From this many excluded signals, the thinner evidence base becomes a caveat of its own. */
+export const CONTRADICTION_MIN_EXCLUDED = 2;
+
 /** A signal older than this contributes nothing and reduces confidence instead. */
 export const STALENESS = {
   /** NPS at full weight up to here. */

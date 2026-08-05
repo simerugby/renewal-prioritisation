@@ -21,10 +21,12 @@
 import {
   CONFIDENCE_COVERAGE_THRESHOLDS,
   CONFIDENCE_LEVEL_CUTOFFS,
+  CONTRADICTION_MIN_EXCLUDED,
   CURVES,
   deriveArrReference,
   HEALTHY_NPS_THRESHOLD,
   MAX_STAGE_GAP,
+  NEGATIVE_NPS_THRESHOLD,
   NPS_AGE_WEIGHTING,
   NPS_RISK,
   SUPPORT_STRAIN_MIX,
@@ -286,7 +288,7 @@ function detectContradictions(c: Customer, signals: SignalResult[]): Contradicti
     });
   }
 
-  if (trend > 0 && c.npsScore !== null && c.npsScore < 0) {
+  if (trend > 0 && c.npsScore !== null && c.npsScore < NEGATIVE_NPS_THRESHOLD) {
     found.push({
       key: 'usage-vs-sentiment',
       summary: 'Usage is up, sentiment is negative',
@@ -303,7 +305,7 @@ function detectContradictions(c: Customer, signals: SignalResult[]): Contradicti
   }
 
   const excluded = signals.filter((s) => s.normalised === null);
-  if (excluded.length >= 2) {
+  if (excluded.length >= CONTRADICTION_MIN_EXCLUDED) {
     found.push({
       key: 'multiple-gaps',
       summary: `${excluded.length} signals unusable`,
